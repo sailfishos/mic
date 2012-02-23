@@ -353,12 +353,12 @@ def get_file_size(file):
     """ Return size in MB unit """
     rc, duOutput  = runner.runtool(['du', "-s", "-b", "-B", "1M", file])
     if rc != 0:
-        raise CreatorError("Failed to run %s" % du)
+        raise CreatorError("Failed to run du on file : %s" % file)
 
     size1 = int(duOutput.split()[0])
     rc, duOutput = runner.runtool(['du', "-s", "-B", "1M", file])
     if rc != 0:
-        raise CreatorError("Failed to run %s" % du)
+        raise CreatorError("Failed to run du on file: %s" % file)
 
     size2 = int(duOutput.split()[0])
     if size1 > size2:
