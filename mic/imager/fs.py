@@ -38,8 +38,7 @@ class FsImageCreator(BaseImageCreator):
         ignores = ["/dev/fd",
                    "/dev/stdin",
                    "/dev/stdout",
-                   "/dev/stderr",
-                   "/etc/mtab"]
+                   "/dev/stderr"]
 
         if not os.path.exists(destdir):
             os.makedirs(destdir)
