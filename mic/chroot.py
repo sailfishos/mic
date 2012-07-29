@@ -178,11 +178,6 @@ def setup_chrootenv(chrootdir, bindmounts = None):
 
     setup_resolv(chrootdir)
 
-    mtab = "/etc/mtab"
-    dstmtab = chrootdir + mtab
-    if not os.path.islink(dstmtab):
-        shutil.copyfile(mtab, dstmtab)
-
     chroot_lock = os.path.join(chrootdir, ".chroot.lock")
     chroot_lockfd = open(chroot_lock, "w")
 
@@ -248,10 +243,6 @@ def cleanup_chrootenv(chrootdir, bindmounts = None, globalmounts = []):
             shutil.rmtree(tmpdir, ignore_errors = True)
 
         cleanup_resolv(chrootdir)
-
-        if os.path.exists(chrootdir + "/etc/mtab"):
-            os.unlink(chrootdir + "/etc/mtab")
-
         kill_processes(chrootdir)
 
     cleanup_mountdir(chrootdir, bindmounts)
@@ -283,8 +274,8 @@ def chroot(chrootdir, bindmounts = None, execute = "/bin/bash"):
             devs = ['dev/fd',
                     'dev/stdin',
                     'dev/stdout',
-                    'dev/stderr',
-                    'etc/mtab']
+                    'dev/stderr']
+
             ignlst = [os.path.join(saveto, x) for x in devs]
             map(os.unlink, filter(os.path.exists, ignlst))
         else:
