@@ -1,6 +1,8 @@
 #!/usr/bin/python -tt
 #
 # Copyright (c) 2010, 2011 Intel, Inc.
+# Copyright (c) 2012 Jolla Ltd.
+# Contact: Islam Amer <islam.amer@jollamobile.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -136,6 +138,16 @@ class Zypp(BackendPlugin):
                 name = ".".join(sp)
         return name, arch
 
+    def _castKind(self, poolitem):
+        item = None
+        if zypp.isKindPattern(poolitem):
+            item = zypp.asKindPattern(poolitem)
+        elif zypp.isKindPackage(poolitem):
+            item = zypp.asKindPackage(poolitem)
+        elif zypp.isKindResolvable(poolitem):
+            item = zypp.asKindResolvable(poolitem)
+        return item
+
     def selectPackage(self, pkg):
         """Select a given package or package pattern, can be specified
         with name.arch or name* or *name
@@ -184,20 +196,21 @@ class Zypp(BackendPlugin):
 
         for item in sorted(
                         q.queryResults(self.Z.pool()),
-                        cmp=lambda x,y: cmpEVR(x.edition(), y.edition()),
+                        cmp=lambda x,y: cmpEVR(self._castKind(x).edition(), self._castKind(y).edition()),
                         reverse=True):
 
-            if item.name() in self.excpkgs.keys() and \
-               self.excpkgs[item.name()] == item.repoInfo().name():
+            xitem = self._castKind(item)
+            if xitem.name() in self.excpkgs.keys() and \
+               self.excpkgs[xitem.name()] == xitem.repoInfo().name():
                 continue
-            if item.name() in self.incpkgs.keys() and \
-               self.incpkgs[item.name()] != item.repoInfo().name():
+            if xitem.name() in self.incpkgs.keys() and \
+               self.incpkgs[xitem.name()] != xitem.repoInfo().name():
                 continue
 
             found = True
-            obspkg = self.whatObsolete(item.name())
+            obspkg = self.whatObsolete(xitem.name())
             if arch:
-                if arch == str(item.arch()):
+                if arch == str(xitem.arch()):
                     item.status().setToBeInstalled (zypp.ResStatus.USER)
             else:
                 markPoolItem(obspkg, item)
@@ -214,15 +227,17 @@ class Zypp(BackendPlugin):
                             q.queryResults(self.Z.pool()),
                             cmp=lambda x,y: cmpEVR(x.edition(), y.edition()),
                             reverse=True):
-                if item.name() in self.excpkgs.keys() and \
-                   self.excpkgs[item.name()] == item.repoInfo().name():
+
+                xitem = self._castKind(item)
+                if xitem.name() in self.excpkgs.keys() and \
+                   self.excpkgs[xitem.name()] == xitem.repoInfo().name():
                     continue
-                if item.name() in self.incpkgs.keys() and \
-                   self.incpkgs[item.name()] != item.repoInfo().name():
+                if xitem.name() in self.incpkgs.keys() and \
+                   self.incpkgs[xitem.name()] != xitem.repoInfo().name():
                     continue
 
                 found = True
-                obspkg = self.whatObsolete(item.name())
+                obspkg = self.whatObsolete(xitem.name())
                 markPoolItem(obspkg, item)
                 break
 
@@ -267,8 +282,10 @@ class Zypp(BackendPlugin):
         q=zypp.PoolQuery()
         q.addKind(zypp.ResKind.pattern)
         for item in q.queryResults(self.Z.pool()):
-            summary = "%s" % item.summary()
-            name = "%s" % item.name()
+
+            xitem = self._castKind(item)
+            summary = "%s" % xitem.summary()
+            name = "%s" % xitem.name()
             if name == grp or summary == grp:
                 found = True
                 item.status().setToBeInstalled (zypp.ResStatus.USER)
@@ -390,17 +407,18 @@ class Zypp(BackendPlugin):
         todo = zypp.GetResolvablesToInsDel(self.Z.pool())
         installed_pkgs = todo._toInstall
         dlpkgs = []
-        for item in installed_pkgs:
-            if not zypp.isKindPattern(item) and \
-               not self.inDeselectPackages(item):
-                dlpkgs.append(item)
+        for xitem in installed_pkgs:
+            if not zypp.isKindPattern(xitem):
+               item = self._castKind(xitem)
+               if not self.inDeselectPackages(item):
+                   dlpkgs.append(item)
 
         # record all pkg and the content
         localpkgs = self.localpkgs.keys()
-        for pkg in dlpkgs:
+        for package in dlpkgs:
             license = ''
-            if pkg.name() in localpkgs:
-                hdr = rpmmisc.readRpmHeader(self.ts, self.localpkgs[pkg.name()])
+            if package.name() in localpkgs:
+                hdr = rpmmisc.readRpmHeader(self.ts, self.localpkgs[package.name()])
                 pkg_long_name = misc.RPM_FMT % {
                                     'name': hdr['name'],
                                     'arch': hdr['arch'],
@@ -411,12 +429,11 @@ class Zypp(BackendPlugin):
 
             else:
                 pkg_long_name = misc.RPM_FMT % {
-                                    'name': pkg.name(),
-                                    'arch': pkg.arch(),
-                                    'ver_rel': pkg.edition(),
+                                    'name': package.name(),
+                                    'arch': package.arch(),
+                                    'ver_rel': package.edition(),
                                 }
 
-                package = zypp.asKindPackage(pkg)
                 license = package.license()
 
             self.__pkgs_content[pkg_long_name] = {} #TBD: to get file list
@@ -575,7 +592,7 @@ class Zypp(BackendPlugin):
     def getLocalPkgPath(self, po):
         repoinfo = po.repoInfo()
         cacheroot = repoinfo.packagesPath()
-        location= zypp.asKindPackage(po).location()
+        location= po.location()
         rpmpath = str(location.filename())
         pkgpath = "%s/%s" % (cacheroot, os.path.basename(rpmpath))
         return pkgpath
@@ -699,7 +716,7 @@ class Zypp(BackendPlugin):
                 baseurl = str(po.repoInfo().baseUrls()[0])
                 baseurl = baseurl.strip()
 
-                location = zypp.asKindPackage(po).location()
+                location = po.location()
                 location = str(location.filename())
 
                 if baseurl.startswith("file:/"):
@@ -831,7 +848,7 @@ class Zypp(BackendPlugin):
         if index > -1:
             baseurl = baseurl[:index]
 
-        location = zypp.asKindPackage(pobj).location()
+        location = pobj.location()
         location = str(location.filename())
         if location.startswith("./"):
             location = location[2:]
