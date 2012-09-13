@@ -436,6 +436,9 @@ class Yum(BackendPlugin, yum.YumBase):
     def getAllContent(self):
         return self.__pkgs_content
 
+    def getAllUrls(self):
+        return None
+
     def getPkgsLicense(self):
         return self.__pkgs_license
 

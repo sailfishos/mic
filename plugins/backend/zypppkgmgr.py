@@ -61,6 +61,7 @@ class Zypp(BackendPlugin):
 
         self.__pkgs_license = {}
         self.__pkgs_content = {}
+        self.__pkgs_urls = {}
         self.repos = []
         self.to_deselect = []
         self.localpkgs = {}
@@ -437,6 +438,7 @@ class Zypp(BackendPlugin):
                 license = package.license()
 
             self.__pkgs_content[pkg_long_name] = {} #TBD: to get file list
+            self.__pkgs_urls[pkg_long_name] = self.get_url(package)
 
             if license in self.__pkgs_license.keys():
                 self.__pkgs_license[license].append(pkg_long_name)
@@ -495,6 +497,9 @@ class Zypp(BackendPlugin):
 
     def getAllContent(self):
         return self.__pkgs_content
+
+    def getAllUrls(self):
+        return self.__pkgs_urls
 
     def getPkgsLicense(self):
         return self.__pkgs_license

@@ -279,7 +279,15 @@ class BaseImageCreator(object):
             content = '\n'.join(pkgs)
             f.write(content)
             f.close()
-            self.outimage.append(namefile);
+            self.outimage.append(namefile)
+
+        if 'url' in self._recording_pkgs :
+            namefile = os.path.join(destdir, self.name + '.urls')
+            f = open(namefile, "w")
+            content = '\n'.join(sorted([url for pkg, url in self._pkgs_urls.items()]))
+            f.write(content)
+            f.close()
+            self.outimage.append(namefile)
 
         # if 'content', save more details
         if 'content' in self._recording_pkgs :
@@ -939,6 +947,7 @@ class BaseImageCreator(object):
                 raise
         finally:
             self._pkgs_content = pkg_manager.getAllContent()
+            self._pkgs_urls = pkg_manager.getAllUrls()
             self._pkgs_license = pkg_manager.getPkgsLicense()
             self.__attachment_packages(pkg_manager)
 

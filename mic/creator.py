@@ -83,7 +83,7 @@ class Creator(cmdln.Cmdln):
                              help='Record the info of installed packages, '
                                   'multiple values can be specified which '
                                   'joined by ",", valid values: "name", '
-                                  '"content", "license"')
+                                  '"url", "content", "license"')
         optparser.add_option('', '--pkgmgr', type='string', dest='pkgmgr',
                              default=None,
                              help='Specify backend package manager')
@@ -183,9 +183,9 @@ class Creator(cmdln.Cmdln):
         if self.options.record_pkgs:
             configmgr.create['record_pkgs'] = []
             for infotype in self.options.record_pkgs.split(','):
-                if infotype not in ('name', 'content', 'license'):
+                if infotype not in ('name', 'url', 'content', 'license'):
                     raise errors.Usage('Invalid pkg recording: %s, valid ones:'
-                                       ' "name", "content", "license"' \
+                                       ' "name", "url", "content", "license"' \
                                        % infotype)
 
                 configmgr.create['record_pkgs'].append(infotype)
