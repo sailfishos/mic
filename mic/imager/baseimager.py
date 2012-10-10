@@ -1230,14 +1230,18 @@ class BaseImageCreator(object):
         if not os.path.exists(self.destdir):
             os.makedirs(self.destdir)
 
-        for kernel in glob.glob("%s/boot/vmlinuz-*" % self._instroot):
-            kernelfilename = "%s/%s-%s" % (self.destdir,
-                                           self.name,
-                                           os.path.basename(kernel))
-            msger.info('copy kernel file %s as %s' % (os.path.basename(kernel),
-                                                      kernelfilename))
-            shutil.copy(kernel, kernelfilename)
-            self.outimage.append(kernelfilename)
+        for glb in ["%s/boot/vmlinuz-*" % self._instroot,
+                    "%s/boot/initrd-*" % self._instroot,
+                    "%s/boot/u*" % self._instroot
+                    ]:
+            for fil in glob.glob(glb):
+                filename = "%s/%s-%s" % (self.destdir,
+                                         self.name,
+                                         os.path.basename(fil))
+                msger.info('copy file %s as %s' % (os.path.basename(fil),
+                                                   filename))
+                shutil.copy(fil, filename)
+                self.outimage.append(filename)
 
     def copy_attachment(self):
         """ Subclass implement it to handle attachment files
