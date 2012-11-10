@@ -1,6 +1,8 @@
 #!/usr/bin/python -tt
 #
 # Copyright (c) 2010, 2011 Intel Inc.
+# Copyright (c) 2012 Jolla Ltd.
+# Contact: Islam Amer <islam.amer@jollamobile.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -231,38 +233,45 @@ def get_md5sum(fpath):
             md5sum.update(data)
     return md5sum.hexdigest()
 
-def normalize_ksfile(ksconf, release, arch):
-    def _clrtempks():
-        try:
-            os.unlink(ksconf)
-        except:
-            pass
+def normalize_ksfile(ksconf, tokenmap):
 
     if not os.path.exists(ksconf):
         return
 
-    if not release:
-        release = "latest"
-    if not arch or re.match(r'i.86', arch):
-        arch = "ia32"
+    if not "RELEASE" in tokenmap:
+        tokenmap["RELEASE"] = "latest"
+    if not "ARCH" in tokenmap or re.match(r'i.86', tokenmap["ARCH"]):
+        tokenmap["arch"] = "ia32"
+    if not "BUILD_ID" in tokenmap:
+        tokenmap["BUILD_ID"] = tokenmap["RELEASE"]
 
     with open(ksconf) as f:
         ksc = f.read()
 
-    if "@ARCH@" in ksc or "@BUILD_ID@" in ksc:
-        msger.info("Substitute macro variable @BUILD_ID@/@ARCH in ks: %s" % ksconf)
-        ksc = ksc.replace("@ARCH@", arch)
-        ksc = ksc.replace("@BUILD_ID@", release)
-        fd, ksconf = tempfile.mkstemp(prefix=os.path.basename(ksconf), dir="/tmp/")
-        os.write(fd, ksc)
-        os.close(fd)
+    ksconf = os.path.basename(ksconf)
+    for token, value in tokenmap.items():
+        if "@%s@" % token in ksc:
+            msger.info("Substitute macro variable @%s@ with %s" % (token, value))
+            ksc = ksc.replace("@%s@" % token, value)
+            ksconf = ksconf.replace("@%s@" % token, value)
 
-        msger.debug('new ks path %s' % ksconf)
+    ksconfdir = tempfile.mkdtemp(dir="/tmp/")
+    with open(os.path.join(ksconfdir, ksconf), 'w') as fd:
+        fd.write(ksc)
 
-        import atexit
-        atexit.register(_clrtempks)
+    msger.debug('new ks path %s' % ksconf)
 
-    return ksconf
+    import atexit
+    def _clrtempks():
+        try:
+            os.unlink(os.path.join(ksconfdir, ksconf))
+            os.rmdir(ksconfdir)
+        except:
+            pass
+
+    atexit.register(_clrtempks)
+
+    return os.path.join(ksconfdir, ksconf)
 
 def _check_meego_chroot(rootdir):
     if not os.path.exists(rootdir + "/etc/moblin-release") and \

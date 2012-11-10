@@ -1,6 +1,8 @@
 #!/usr/bin/python -tt
 #
 # Copyright (c) 2011 Intel, Inc.
+# Copyright (c) 2012 Jolla Ltd.
+# Contact: Islam Amer <islam.amer@jollamobile.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -108,6 +110,11 @@ class Creator(cmdln.Cmdln):
                              dest='copy_kernel',
                              help='Copy kernel files from image /boot directory'
                                   ' to the image output directory.')
+        optparser.add_option('', '--tokenmap', type='string', dest='tokenmap',
+                             default=None, metavar='TOKENMAP',
+                             help='comma separated pairs of TOKEN:VALUE mappings,'
+                                  ' when @TOKEN@ is contained in kickstart file'
+                                  ' it will be replaced by VALUE')
         return optparser
 
     def preoptparse(self, argv):
@@ -211,6 +218,19 @@ class Creator(cmdln.Cmdln):
 
         if self.options.copy_kernel:
             configmgr.create['copy_kernel'] = self.options.copy_kernel
+
+        if self.options.tokenmap:
+            tokenmap = {}
+            for pair in self.options.tokenmap.split(","):
+                token, value = pair.split(":",1)
+                tokenmap[token] = value
+
+            if not "RELEASE" in tokenmap and self.options.release:
+                tokenmap["RELEASE"] = self.options.release
+            if not "BUILD_ID" in tokenmap and "RELEASE" in tokenmap:
+                tokenmap["BUILD_ID"] = tokenmap["RELEASE"]
+
+            configmgr.create['tokenmap'] = tokenmap
 
     def main(self, argv=None):
         if argv is None:

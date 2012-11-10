@@ -1,6 +1,8 @@
 #!/usr/bin/python -tt
 #
 # Copyright (c) 2011 Intel, Inc.
+# Copyright (c) 2012 Jolla Ltd.
+# Contact: Islam Amer <islam.amer@jollamobile.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -21,7 +23,7 @@ import re
 import tempfile
 
 from mic import chroot, msger, rt_util
-from mic.utils import misc, fs_related, errors, runner, cmdln
+from mic.utils import misc, fs_related, errors, runner, cmdln, common
 from mic.conf import configmgr
 from mic.plugin import pluginmgr
 from mic.utils.partitionedfs import PartitionedMount
@@ -48,54 +50,10 @@ class RawPlugin(ImagerPlugin):
         ${cmd_option_list}
         """
 
-        if not args:
-            raise errors.Usage("need one argument as the path of ks file")
+        creatoropts = common.creatoropts(args)
 
-        if len(args) != 1:
-            raise errors.Usage("Extra arguments given")
-
-        creatoropts = configmgr.create
-        ksconf = args[0]
-
-        if not os.path.exists(ksconf):
-            raise errors.CreatorError("Can't find the file: %s" % ksconf)
-
-        recording_pkgs = []
-        if len(creatoropts['record_pkgs']) > 0:
-            recording_pkgs = creatoropts['record_pkgs']
-
-        if creatoropts['release'] is not None:
-            if 'name' not in recording_pkgs:
-                recording_pkgs.append('name')
-
-        ksconf = misc.normalize_ksfile(ksconf,
-                                       creatoropts['release'],
-                                       creatoropts['arch'])
-
-        configmgr._ksconf = ksconf
-
-        # Called After setting the configmgr._ksconf as the creatoropts['name'] is reset there.
-        if creatoropts['release'] is not None:
-            creatoropts['outdir'] = "%s/%s/images/%s/" % (creatoropts['outdir'], creatoropts['release'], creatoropts['name'])
-
-        # try to find the pkgmgr
-        pkgmgr = None
-        for (key, pcls) in pluginmgr.get_plugins('backend').iteritems():
-            if key == creatoropts['pkgmgr']:
-                pkgmgr = pcls
-                break
-
-        if not pkgmgr:
-            pkgmgrs = pluginmgr.get_plugins('backend').keys()
-            raise errors.CreatorError("Can't find package manager: %s (availables: %s)" % (creatoropts['pkgmgr'], ', '.join(pkgmgrs)))
-
-        if creatoropts['runtime']:
-            rt_util.runmic_in_runtime(creatoropts['runtime'], creatoropts, ksconf, None)
-
-        creator = raw.RawImageCreator(creatoropts, pkgmgr, opts.compress_image)
-
-        if len(recording_pkgs) > 0:
-            creator._recording_pkgs = recording_pkgs
+        creator = raw.RawImageCreator(creatoropts, creatoropts["pkgmgr_pcls"], opts.compress_image)
+        creator._recording_pkgs = creatoropts['record_pkgs']
 
         images = ["%s-%s.raw" % (creator.name, part['name'])
                   for part in creator.get_diskinfo()]
@@ -114,6 +72,9 @@ class RawPlugin(ImagerPlugin):
             creator.package(creatoropts["outdir"])
             if creatoropts['release'] is not None:
                 creator.release_output(ksconf, creatoropts['outdir'], creatoropts['release'])
+            else:
+                creator.outimage.append(creatoropts['dst_ks'])
+
             creator.print_outimage_info()
 
         except errors.CreatorError:
