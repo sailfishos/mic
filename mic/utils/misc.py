@@ -471,6 +471,8 @@ def _get_metadata_from_repo(baseurl, proxies, cachedir, reponame, filename,
     else:
         filename = filename_tmp
     if sumtype and checksum and os.path.exists(filename):
+        if sumtype == "sha":
+            sumtype = "sha1"
         sumcmd = "%ssum" % sumtype
         file_checksum = runner.outs([sumcmd, filename]).split()[0]
         if file_checksum == checksum:
@@ -519,8 +521,12 @@ def get_metadata_from_repos(repos, cachedir):
         for elm in root.getiterator("%sdata" % ns):
             if elm.attrib["type"] in ("group_gz", "group"):
                 filepaths['comps'] = elm.find("%slocation" % ns).attrib['href']
-                checksums['comps'] = elm.find("%sopen-checksum" % ns).text
-                sumtypes['comps'] = elm.find("%sopen-checksum" % ns).attrib['type']
+                if elm.find("%sopen-checksum" % ns):
+                    checksums['comps'] = elm.find("%sopen-checksum" % ns).text
+                    sumtypes['comps'] = elm.find("%sopen-checksum" % ns).attrib['type']
+                else:
+                    checksums['comps'] = elm.find("%schecksum" % ns).text
+                    sumtypes['comps'] = elm.find("%schecksum" % ns).attrib['type']
                 break
 
         primary_type = None
