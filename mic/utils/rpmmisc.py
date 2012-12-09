@@ -1,6 +1,8 @@
 #!/usr/bin/python -tt
 #
 # Copyright (c) 2008, 2009, 2010, 2011 Intel, Inc.
+# Copyright (c) 2012 Jolla Ltd.
+# Contact: Islam Amer <islam.amer@jollamobile.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -19,6 +21,9 @@ import os, sys, re
 import fcntl
 import struct
 import termios
+import tempfile
+import shutil
+import urlparse
 import rpm
 from mic import msger
 from .errors import CreatorError
@@ -29,7 +34,7 @@ if rpm.labelCompare(grabber_version.split('.'), '3.9.0'.split('.')) == -1:
     msger.warning("Version of python-urlgrabber is %s, lower than '3.9.0', "
                   "you may encounter some network issues" % grabber_version)
 
-def myurlgrab(url, filename, proxies, progress_obj = None):
+def myurlgrab(url, filename, proxies, progress_obj = None, ignore_404 = False):
     g = grabber.URLGrabber()
     if progress_obj is None:
         progress_obj = TextProgress()
@@ -37,7 +42,10 @@ def myurlgrab(url, filename, proxies, progress_obj = None):
     if url.startswith("file:/"):
         file = url.replace("file:", "")
         if not os.path.exists(file):
-            raise CreatorError("URLGrabber error: can't find file %s" % file)
+            if ignore_404:
+                return None
+            else:
+                raise CreatorError("URLGrabber error: can't find file %s" % file)
         runner.show(['cp', "-f", file, filename])
     else:
         try:
@@ -46,7 +54,10 @@ def myurlgrab(url, filename, proxies, progress_obj = None):
                 proxies = proxies, http_headers = (('Pragma', 'no-cache'),),
                 quote = 0, progress_obj = progress_obj)
         except grabber.URLGrabError, e:
-            raise CreatorError("URLGrabber error: %s" % url)
+            if e.errno == 14 and e.code in [404, 503] and ignore_404:
+                return None
+            else:
+                raise CreatorError("URLGrabber error: %s" % url)
 
     return filename
 
@@ -499,136 +510,67 @@ def getSigInfo(hdr):
     infotuple = (sigtype, sigdate, sigid)
     return error, infotuple
 
+def _pager_file(savepath):
+
+    if os.path.splitext(savepath)[1].upper() in ('.HTM', '.HTML'):
+        pagers = ('w3m', 'links', 'lynx', 'less', 'more')
+    else:
+        pagers = ('less', 'more')
+
+    file_showed = False
+    for pager in pagers:
+        cmd = "%s %s" % (pager, savepath)
+        try:
+            os.system(cmd)
+        except OSError:
+            continue
+        else:
+            file_showed = True
+            break
+
+    if not file_showed:
+        f = open(savepath)
+        msger.raw(f.read())
+        f.close()
+        msger.pause()
+
 def checkRepositoryEULA(name, repo):
     """ This function is to check the EULA file if provided.
         return True: no EULA or accepted
         return False: user declined the EULA
     """
-
-    import tempfile
-    import shutil
-    import urlparse
-    import urllib2 as u2
-    import httplib
-    from errors import CreatorError
-
-    def _check_and_download_url(u2opener, url, savepath):
-        try:
-            if u2opener:
-                f = u2opener.open(url)
-            else:
-                f = u2.urlopen(url)
-        except u2.HTTPError, httperror:
-            if httperror.code in (404, 503):
-                return None
-            else:
-                raise CreatorError(httperror)
-        except OSError, oserr:
-            if oserr.errno == 2:
-                return None
-            else:
-                raise CreatorError(oserr)
-        except IOError, oserr:
-            if hasattr(oserr, "reason") and oserr.reason.errno == 2:
-                return None
-            else:
-                raise CreatorError(oserr)
-        except u2.URLError, err:
-            raise CreatorError(err)
-        except httplib.HTTPException, e:
-            raise CreatorError(e)
-
-        # save to file
-        licf = open(savepath, "w")
-        licf.write(f.read())
-        licf.close()
-        f.close()
-
-        return savepath
-
-    def _pager_file(savepath):
-
-        if os.path.splitext(savepath)[1].upper() in ('.HTM', '.HTML'):
-            pagers = ('w3m', 'links', 'lynx', 'less', 'more')
-        else:
-            pagers = ('less', 'more')
-
-        file_showed = False
-        for pager in pagers:
-            cmd = "%s %s" % (pager, savepath)
-            try:
-                os.system(cmd)
-            except OSError:
-                continue
-            else:
-                file_showed = True
-                break
-
-        if not file_showed:
-            f = open(savepath)
-            msger.raw(f.read())
-            f.close()
-            msger.pause()
-
-    # when proxy needed, make urllib2 follow it
+    proxies = {}
     proxy = repo.proxy
-    proxy_username = repo.proxy_username
-    proxy_password = repo.proxy_password
 
-    if not proxy:
-        proxy = get_proxy_for(repo.baseurl[0])
-
-    handlers = []
-    auth_handler = u2.HTTPBasicAuthHandler(u2.HTTPPasswordMgrWithDefaultRealm())
-    u2opener = None
     if proxy:
+        proxy_username = repo.proxy_username
+        proxy_password = repo.proxy_password
+
         if proxy_username:
             proxy_netloc = urlparse.urlsplit(proxy).netloc
             if proxy_password:
-                proxy_url = 'http://%s:%s@%s' % (proxy_username, proxy_password, proxy_netloc)
+                proxy = 'http://%s:%s@%s' % (proxy_username, proxy_password, proxy_netloc)
             else:
-                proxy_url = 'http://%s@%s' % (proxy_username, proxy_netloc)
-        else:
-            proxy_url = proxy
+                proxy = 'http://%s@%s' % (proxy_username, proxy_netloc)
 
-        proxy_support = u2.ProxyHandler({'http': proxy_url,
-                                         'https': proxy_url,
-                                         'ftp': proxy_url})
-        handlers.append(proxy_support)
+    else:
+        proxy = get_proxy_for(repo.baseurl[0])
+
+    if proxy:
+        proxies = {str(repourl.split(':')[0]): str(proxy)}
 
     # download all remote files to one temp dir
     baseurl = None
     repo_lic_dir = tempfile.mkdtemp(prefix = 'repolic')
 
     for url in repo.baseurl:
-        tmphandlers = handlers[:]
-
-        (scheme, host, path, parm, query, frag) = urlparse.urlparse(url.rstrip('/') + '/')
-        if scheme not in ("http", "https", "ftp", "ftps", "file"):
-            raise CreatorError("Error: invalid url %s" % url)
-
-        if '@' in host:
-            try:
-                user_pass, host = host.split('@', 1)
-                if ':' in user_pass:
-                    user, password = user_pass.split(':', 1)
-            except ValueError, e:
-                raise CreatorError('Bad URL: %s' % url)
-
-            msger.verbose("adding HTTP auth: %s, %s" %(user, password))
-            auth_handler.add_password(None, host, user, password)
-            tmphandlers.append(auth_handler)
-            url = scheme + "://" + host + path + parm + query + frag
-
-        if tmphandlers:
-            u2opener = u2.build_opener(*tmphandlers)
 
         # try to download
         repo_eula_url = urlparse.urljoin(url, "LICENSE.txt")
-        repo_eula_path = _check_and_download_url(
-                                u2opener,
-                                repo_eula_url,
-                                os.path.join(repo_lic_dir, repo.id + '_LICENSE.txt'))
+
+        repo_eula_path = myurlgrab(repo_eula_url,
+                                   os.path.join(repo_lic_dir, repo.id + '_LICENSE.txt'),
+                                   proxies, ignore_404 = True)
         if repo_eula_path:
             # found
             baseurl = url
@@ -655,10 +597,9 @@ def checkRepositoryEULA(name, repo):
 
     # try to find support_info.html for extra infomation
     repo_info_url = urlparse.urljoin(baseurl, "support_info.html")
-    repo_info_path = _check_and_download_url(
-                            u2opener,
-                            repo_info_url,
-                            os.path.join(repo_lic_dir, repo.id + '_support_info.html'))
+    repo_info_path = myurlgrab(repo_eula_url,
+                               os.path.join(repo_lic_dir, repo.id + '_LICENSE.txt'),
+                               proxies, ignore_404 = True)
     if repo_info_path:
         msger.info('There is one more file in the repo for additional support information, please read it')
         msger.pause()

@@ -401,7 +401,7 @@ class Zypp(BackendPlugin):
         self.pre_pkgs.append(pkg)
 
     def runInstall(self, checksize = 0):
-        os.environ["HOME"] = "/"
+        #FIXME: WHY? os.environ["HOME"] = "/"
         os.environ["LD_PRELOAD"] = ""
         self.buildTransaction()
 
