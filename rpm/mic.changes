@@ -1,0 +1,85 @@
+* Sun Dec 9 2012 Islam Amer <islam.amer@jollamobile.com> - 0.14-mer1
+ - New upstream 0.14
+ - Rebased Mer patches
+ - Fix zypper backend
+ - Add new recoding file .urls which contains urls of packages used in the image
+ - Extract uImage files from /boot when using --copy-kernel
+ - Refactor common creator options and add token map feature
+ - Fixup for usage with ~/.netrc enabled urlgrabber and zypper
+ - Workaround for repos with broken repomd.xml files
+
+* Mon Jul 30 2012 David Greaves <david@dgreaves.com> - 0.13-mer1
+ - New upstream 0.13
+ - Rebased patches
+ - Added Amir Hassan's mtab fix for MER#489
+ - mtab Resolves MER#218, 
+
+* Tue Apr 17 2012 David Greaves <david@dgreaves.com> - 0.8.acf9b1
+- Snapshot of 0.8 with Mer patches
+  - Added i486 to list of architectures
+  - Fix du issues
+
+* Tue Feb 21 2012 David Greaves <david@dgreaves.com> - 0.6-ac5bec
+- Snapshot of 0.6
+  - Added i486 to list of architectures
+
+* Fri Jan 06 2012 Gui Chen <gui.chen@intel.com> - 0.4
+- Release 0.4, changes including:
+  - Support bootstrap mode, run with '--runtime=bootstrap'
+  - Full support for taring-to output, use 'mic ch x.tar'
+  - Break dependency between backend and baseimage
+  - Check valid repos in ks file
+  - Space check update and catch no space exception
+  - Fix no prompt when cv and ch no existed image
+  - Fix NoneType 'createopts' when convert
+  - Fix no existed local_pkgs_path
+ 
+* Mon Dec 26 2011 Zhang Qiang<qiang.z.zhang@intel.com> - 0.3
+- Upgrade to version 0.3, changes including:
+  - Unit test support, run 'make test'
+  - Enable proxy support in config file
+  - Refine configmgr and pluginmgr
+  - Support multi instance with different cache dir
+  - Add 47 system test case
+  - Improve md5sum generation
+  - Add repo option --ssl_verify
+  - Add option --name_prefix
+  - Reformatted code according to PEP08
+  - Backport from mic2:
+    - Add priority and cost option for repos
+    - Reinstroduced compress-disk-image option 
+
+* Tue Nov 29 2011 Gui Chen <gui.chen@intel.com> - 0.2
+- Release 0.2, with the following changes:
+  - Support btrfs and ext4 fstype for creator, convertor, and chroot
+  - Append distfiles and Makefile
+  - Check arch type from repo data
+  - Set rpm dbpath to fix 'rpm -qa' issue
+  - Fix chroot issue caused by image size
+  - Improve setup.py and make it compatible with python 2.5
+  - Disable ca check for https
+  - Change default output dir name to ./mic-output
+  - untrack mic/__version__.py
+  - Fix some minor issues
+
+* Thu Oct 27 2011 Gui Chen <gui.chen@intel.com> - 0.1
+- Official release 0.1, with the following features:
+  - Support three subcommand: create, convert, chroot
+  - Support five image types: fs, loop, raw, livecd, liveusb
+  - Support two package manager backend: yum and zypp
+  - Support the following global command line options:
+    - --verbose
+    - --debug
+  - Creator subcommand support the following command line options:
+    - --logfile=LOGFILE
+    - -c CONFIG, --config=CONFIG
+    - -k CACHEDIR, --cachedir=CACHEDIR
+    - -o OUTDIR, --outdir=OUTDIR
+    - -A ARCH, --arch=ARCH
+    - --release=RID
+    - --record-pkgs=RECORD_PKGS
+    - --pkgmgr=PKGMGR
+    - --local-pkgs-path=LOCAL_PKGS_PATH
+
+  Please read README.rst for more details.
+
