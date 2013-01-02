@@ -557,7 +557,7 @@ def checkRepositoryEULA(name, repo):
         proxy = get_proxy_for(repo.baseurl[0])
 
     if proxy:
-        proxies = {str(repourl.split(':')[0]): str(proxy)}
+        proxies = {str(repo.baseurl[0].split(':')[0]): str(proxy)}
 
     # download all remote files to one temp dir
     baseurl = None

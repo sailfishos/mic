@@ -19,6 +19,7 @@
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import os
+import time
 
 from mic import msger
 from mic.utils import runner
@@ -339,6 +340,8 @@ class PartitionedMount(Mount):
                     self.partitions[pnum]['device'] = None
 
             msger.debug("Unmapping %s" % d['disk'].device)
+            #FIXME: find a better way to workaround delayed IO keeping the devices busy
+            time.sleep(4)
             rc = runner.quiet([self.kpartx, "-d", d['disk'].device])
             if rc != 0:
                 raise MountError("Failed to unmap partitions for '%s'" %
@@ -562,7 +565,6 @@ class PartitionedMount(Mount):
             subvol["mounted"] = False
 
     def __create_subvolume_snapshots(self, p, pdisk):
-        import time
 
         if self.snapshot_created:
             return

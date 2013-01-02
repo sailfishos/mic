@@ -528,10 +528,18 @@ class VfatDiskMount(DiskMount):
         DiskMount.__init__(self, disk, mountdir, fstype, rmmountdir)
         self.blocksize = blocksize
         self.fslabel = fslabel.replace("/", "")
-        self.uuid = "%08X" % int(time.time())
+        self.uuid = None
+        self.blkidcmd = find_binary_path("blkid")
         self.skipformat = skipformat
         self.fsopts = fsopts
         self.fsckcmd = find_binary_path("fsck." + self.fstype)
+
+    def __parse_field(self, output, field):
+        for line in output.split(" "):
+            if line.startswith(field + "="):
+                return line[len(field) + 1:].strip().replace("\"", "")
+
+        raise KeyError("Failed to find field '%s' in output" % field)
 
     def __format_filesystem(self):
         if self.skipformat:
@@ -539,11 +547,12 @@ class VfatDiskMount(DiskMount):
             return
 
         msger.verbose("Formating %s filesystem on %s" % (self.fstype, self.disk.device))
-        rc = runner.show([self.mkfscmd, "-n", self.fslabel, "-i", self.uuid, self.disk.device])
+        rc = runner.show([self.mkfscmd, "-n", self.fslabel, self.disk.device])
         if rc != 0:
             raise MountError("Error creating %s filesystem on disk %s" % (self.fstype,self.disk.device))
-
+ 
         msger.verbose("Tuning filesystem on %s" % self.disk.device)
+        self.uuid = self.__parse_field(runner.outs([self.blkidcmd, self.disk.device]), "UUID")
 
     def __resize_filesystem(self, size = None):
         current_size = os.stat(self.disk.lofile)[stat.ST_SIZE]
