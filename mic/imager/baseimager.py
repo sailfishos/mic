@@ -977,6 +977,7 @@ class BaseImageCreator(object):
             (fd, path) = tempfile.mkstemp(prefix = "ks-script-",
                                           dir = self._instroot + "/tmp")
 
+            s.interp = "/bin/bash"
             s.script = s.script.replace("\r", "")
             os.write(fd, s.script)
             os.close(fd)
