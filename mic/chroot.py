@@ -183,6 +183,16 @@ def setup_chrootenv(chrootdir, bindmounts = None):
 
     return globalmounts
 
+def kill_processes(chrootdir):
+    import glob
+    for fp in glob.glob("/proc/*/root"):
+        try:
+            if os.readlink(fp) == chrootdir:
+                pid = int(fp.split("/")[2])
+                os.kill(pid, 9)
+        except:
+            pass
+
 def cleanup_chrootenv(chrootdir, bindmounts = None, globalmounts = []):
     global chroot_lockfd, chroot_lock
 
@@ -199,16 +209,6 @@ def cleanup_chrootenv(chrootdir, bindmounts = None, globalmounts = []):
             fd.close()
         except:
             pass
-
-    def kill_processes(chrootdir):
-        import glob
-        for fp in glob.glob("/proc/*/root"):
-            try:
-                if os.readlink(fp) == chrootdir:
-                    pid = int(fp.split("/")[2])
-                    os.kill(pid, 9)
-            except:
-                pass
 
     def cleanup_mountdir(chrootdir, bindmounts):
         if bindmounts == "" or bindmounts == None:

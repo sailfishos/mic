@@ -33,6 +33,7 @@ from mic import kickstart
 from mic import msger
 from mic.utils.errors import CreatorError, Abort
 from mic.utils import misc, rpmmisc, runner, fs_related as fs
+from mic.chroot import kill_processes
 
 class BaseImageCreator(object):
     """Installs a system to a chroot directory.
@@ -1006,6 +1007,8 @@ class BaseImageCreator(object):
                                        "with '%s' : %s" % (s.interp, msg))
             finally:
                 os.unlink(path)
+
+        kill_processes(self._instroot)
 
     def __save_repo_keys(self, repodata):
         if not repodata:
