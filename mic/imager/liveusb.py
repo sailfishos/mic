@@ -94,15 +94,10 @@ class LiveUSBImageCreator(LiveCDImageCreator):
                 shutil.copyfile(isodir + "/LiveOS/osmin.img",
                                 usbmnt + "/LiveOS/osmin.img")
 
-            if fstype == "vfat" or fstype == "msdos":
-                uuid = usbloop.partitions[0]['mount'].uuid
-                label = usbloop.partitions[0]['mount'].fslabel
-                usblabel = "UUID=%s-%s" % (uuid[0:4], uuid[4:8])
-                overlaysuffix = "-%s-%s-%s" % (label, uuid[0:4], uuid[4:8])
-            else:
-                diskmount = usbloop.partitions[0]['mount']
-                usblabel = "UUID=%s" % diskmount.uuid
-                overlaysuffix = "-%s-%s" % (diskmount.fslabel, diskmount.uuid)
+            uuid = usbloop.partitions[0]['mount'].uuid
+            label = usbloop.partitions[0]['mount'].fslabel
+            usblabel = "UUID=%s" % (uuid)
+            overlaysuffix = "-%s-%s" % (label, uuid)
 
             args = ['cp', "-Rf", isodir + "/isolinux", usbmnt + "/syslinux"]
             rc = runner.show(args)
