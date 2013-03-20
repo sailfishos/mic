@@ -813,6 +813,10 @@ class BaseImageCreator(object):
         for pkg in skipped_pkgs:
             msger.warning("Skipping missing package '%s'" % (pkg,))
 
+    def __deref_groups(self, pkg_manager):
+        while not pkg_manager.derefGroups():
+            msger.debug("dereffing groups")
+
     def __select_groups(self, pkg_manager):
         skipped_groups = []
         for group in self._required_groups:
@@ -932,8 +936,9 @@ class BaseImageCreator(object):
         try:
             try:
                 self.__preinstall_packages(pkg_manager)
-                self.__select_packages(pkg_manager)
                 self.__select_groups(pkg_manager)
+                self.__deref_groups(pkg_manager)
+                self.__select_packages(pkg_manager)
                 self.__deselect_packages(pkg_manager)
                 self.__localinst_packages(pkg_manager)
 

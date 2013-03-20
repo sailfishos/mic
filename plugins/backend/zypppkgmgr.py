@@ -36,6 +36,11 @@ from mic.utils.proxy import get_proxy_for
 from mic.utils.errors import CreatorError, RepoError, RpmError
 from mic.imager.baseimager import BaseImageCreator
 
+def cmpEVR(ed1, ed2):
+    (e1, v1, r1) = map(str, [ed1.epoch(), ed1.version(), ed1.release()])
+    (e2, v2, r2) = map(str, [ed2.epoch(), ed2.version(), ed2.release()])
+    return rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
+
 class RepositoryStub:
     def __init__(self):
         self.name = None
@@ -163,16 +168,12 @@ class Zypp(BackendPlugin):
             else:
                 obs.status().setToBeInstalled (zypp.ResStatus.USER)
 
-        def cmpEVR(ed1, ed2):
-            (e1, v1, r1) = map(str, [ed1.epoch(), ed1.version(), ed1.release()])
-            (e2, v2, r2) = map(str, [ed2.epoch(), ed2.version(), ed2.release()])
-            return rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
-
         found = False
         startx = pkg.startswith("*")
         endx = pkg.endswith("*")
         ispattern = startx or endx
         name, arch = self._splitPkgString(pkg)
+        msger.debug("selectPackage %s %s" % (name, arch))
 
         q = zypp.PoolQuery()
         q.addKind(zypp.ResKind.package)
@@ -201,6 +202,7 @@ class Zypp(BackendPlugin):
                         reverse=True):
 
             xitem = self._castKind(item)
+            msger.debug("item found %s" % xitem.name())
             if xitem.name() in self.excpkgs.keys() and \
                self.excpkgs[xitem.name()] == xitem.repoInfo().name():
                 continue
@@ -274,7 +276,26 @@ class Zypp(BackendPlugin):
 
     def deselectPackage(self, pkg):
         """collect packages should not be installed"""
+        msger.debug("marking %s for deselect" % pkg)
         self.to_deselect.append(pkg)
+
+    def derefGroups(self):
+        self.buildTransaction()
+
+        todo = zypp.GetResolvablesToInsDel(self.Z.pool())
+        installed_pkgs = todo._toInstall
+        groups = set()
+        for xitem in installed_pkgs:
+            if zypp.isKindPattern(xitem):
+                item = self._castKind(xitem)
+                groups.add(item.name())
+                msger.debug("%s is going to be derefed" % item.name())
+
+        for grp in groups:
+            self.selectGroup(grp)
+        else:
+            return True # signal that no dereffing happened
+        return False # some groups were found
 
     def selectGroup(self, grp, include = ksparser.GROUP_DEFAULT):
         if not self.Z:
@@ -282,13 +303,19 @@ class Zypp(BackendPlugin):
         found = False
         q=zypp.PoolQuery()
         q.addKind(zypp.ResKind.pattern)
-        for item in q.queryResults(self.Z.pool()):
+        msger.debug("looking for %s" % grp)
+        for item in sorted(
+                        q.queryResults(self.Z.pool()),
+                        cmp=lambda x,y: cmpEVR(self._castKind(x).edition(), self._castKind(y).edition()),
+                        reverse=True):
 
             xitem = self._castKind(item)
             summary = "%s" % xitem.summary()
             name = "%s" % xitem.name()
+            msger.debug("checking %s version %s" % (name, xitem.edition()))
             if name == grp or summary == grp:
                 found = True
+                msger.info("marking pattern %s %s to be installed" % ( name, xitem.edition() ))
                 item.status().setToBeInstalled (zypp.ResStatus.USER)
                 break
 
@@ -410,9 +437,10 @@ class Zypp(BackendPlugin):
         dlpkgs = []
         for xitem in installed_pkgs:
             if not zypp.isKindPattern(xitem):
-               item = self._castKind(xitem)
-               if not self.inDeselectPackages(item):
-                   dlpkgs.append(item)
+                item = self._castKind(xitem)
+                if not self.inDeselectPackages(item):
+                    dlpkgs.append(item)
+                    msger.debug("%s is going to be installed" % item.name())
 
         # record all pkg and the content
         localpkgs = self.localpkgs.keys()
@@ -861,11 +889,6 @@ class Zypp(BackendPlugin):
         return os.path.join(baseurl, location)
 
     def package_url(self, pkgname):
-
-        def cmpEVR(ed1, ed2):
-            (e1, v1, r1) = map(str, [ed1.epoch(), ed1.version(), ed1.release()])
-            (e2, v2, r2) = map(str, [ed2.epoch(), ed2.version(), ed2.release()])
-            return rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
 
         if not self.Z:
             self.__initialize_zypp()
