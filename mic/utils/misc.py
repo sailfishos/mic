@@ -135,7 +135,6 @@ def compressing(fpath, method):
         raise CreatorError("Failed to %s file: %s" % (comp_map[method], fpath))
 
 def taring(dstfile, target):
-    import tarfile
     basen, ext = os.path.splitext(dstfile)
     comp = {".tar": None,
             ".gz": "gz", # for .tar.gz
@@ -150,14 +149,13 @@ def taring(dstfile, target):
         tarpath = basen
     else:
         tarpath = basen + ".tar"
-    wf = tarfile.open(tarpath, 'w')
+    tar = find_binary_path('tar')
 
     if os.path.isdir(target):
         for item in os.listdir(target):
-            wf.add(os.path.join(target, item), item)
+            runner.show([tar, "-rSf", tarpath, "-C", target, "--add-file=%s" % item])
     else:
-        wf.add(target, os.path.basename(target))
-    wf.close()
+        runner.show([tar, "-rSf", tarpath, "-C", os.path.dirname(target), "--add-file=%s" % os.path.basename(target)])
 
     if comp:
         compressing(tarpath, comp)
