@@ -296,6 +296,29 @@ class LoopImageCreator(BaseImageCreator):
             self.__imgdir = self._mkdtemp()
 
 
+    def _get_fstab(self):
+        s = ""
+        for p in self._instloops:
+
+            s += "%(device)s  %(mountpoint)s  %(fstype)s  %(fsopts)s 0 0\n" % {
+               'device': "UUID=%s" % p['loop'].uuid,
+               'mountpoint': p['mountpoint'],
+               'fstype': p['fstype'],
+               'fsopts': self.__fsopts }
+
+            #if p['mountpoint'] == "/":
+                #for subvol in self._instloops.subvolumes:
+                #    if subvol['mountpoint'] == "/":
+                #        continue
+                #    s += "%(device)s  %(mountpoint)s  %(fstype)s  %(fsopts)s 0 0\n" % {
+                #         'device': "/dev/%s%-d" % (p['disk'], p['num']),
+                #         'mountpoint': subvol['mountpoint'],
+                #         'fstype': p['fstype'],
+                #         'fsopts': "defaults,noatime" if not subvol['fsopts'] else subvol['fsopts']}
+
+        s += self._get_fstab_special()
+        return s
+
     #
     # Actual implementation
     #
@@ -341,6 +364,7 @@ class LoopImageCreator(BaseImageCreator):
                                        fstype,
                                        self._blocksize,
                                        loop['label'])
+            loop['uuid'] = loop['loop'].uuid
 
             try:
                 msger.verbose('Mounting image "%s" on "%s"' % (imgname, mp))
