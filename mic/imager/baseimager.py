@@ -900,9 +900,11 @@ class BaseImageCreator(object):
 
         """
 
+
         # initialize pkg list to install
         if self.ks:
             self.__sanity_check()
+            self.__run_pre_scripts()
 
             self._required_pkgs = \
                 kickstart.get_packages(self.ks, self._get_required_packages())
@@ -975,7 +977,7 @@ class BaseImageCreator(object):
         self.copy_attachment()
 
     def __run_post_scripts(self):
-        msger.info("Running scripts ...")
+        msger.info("Running post scripts ...")
         if os.path.exists(self._instroot + "/tmp"):
             shutil.rmtree(self._instroot + "/tmp")
         os.mkdir (self._instroot + "/tmp", 1777)
@@ -1002,11 +1004,18 @@ class BaseImageCreator(object):
 
             try:
                 try:
-                    subprocess.call([s.interp, script],
-                                    preexec_fn = preexec,
-                                    env = env,
-                                    stdout = sys.stdout,
-                                    stderr = sys.stderr)
+                    retcode = subprocess.call([s.interp, script],
+                                              preexec_fn = preexec,
+                                              env = env,
+                                              stdout = sys.stdout,
+                                              stderr = sys.stderr)
+                    # exit status 0 is False
+                    if retcode:
+                        if s.errorOnFail:
+                            msger.info("Script returned with non zero status, failing.")
+                            raise CreatorError("Failed to execute %%pre script with %s" % s.interp)
+                        else:
+                            msger.info("Script returned with non zero status, ignoring.")
                 except OSError, (err, msg):
                     raise CreatorError("Failed to execute %%post script "
                                        "with '%s' : %s" % (s.interp, msg))
@@ -1014,6 +1023,47 @@ class BaseImageCreator(object):
                 os.unlink(path)
 
         kill_processes(self._instroot)
+
+    def __run_pre_scripts(self):
+        msger.info("Running pre scripts ...")
+        os.mkdir (self._instroot + "/tmp", 1777)
+        for s in kickstart.get_pre_scripts(self.ks):
+            (fd, path) = tempfile.mkstemp(prefix = "ks-script-",
+                                          dir = self._instroot + "/tmp")
+
+            s.interp = "/bin/bash"
+            s.script = s.script.replace("\r", "")
+            os.write(fd, s.script)
+            os.close(fd)
+            os.chmod(path, 0700)
+
+            # the name is post but it shouldn't be doing anything post specific
+            env = self._get_post_scripts_env(s.inChroot)
+
+            env["INSTALL_ROOT"] = self._instroot
+            env["IMG_NAME"] = self._name
+            preexec = None
+            script = path
+
+            try:
+                try:
+                    retcode = subprocess.call([s.interp, script],
+                                              preexec_fn = preexec,
+                                              env = env,
+                                              stdout = sys.stdout,
+                                              stderr = sys.stderr)
+                    # exit status 0 is False
+                    if retcode:
+                        if s.errorOnFail:
+                            msger.info("Script returned with non zero status, failing.")
+                            raise CreatorError("Failed to execute %%pre script with %s" % s.interp)
+                        else:
+                            msger.info("Script returned with non zero status, ignoring.")
+                except OSError, (err, msg):
+                    raise CreatorError("Failed to execute %%pre script "
+                                       "with '%s' : %s" % (s.interp, msg))
+            finally:
+                os.unlink(path)
 
     def __save_repo_keys(self, repodata):
         if not repodata:

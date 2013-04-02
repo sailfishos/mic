@@ -1,3 +1,20 @@
+* Tue Apr 2 2013 Islam Amer <islam.amer@jollamobile.com> - 0.14-mer7
+ - Add support for %pre scripts
+ - Honor --erroronfail for scripts
+
+* Fri Mar 22 2013 Islam Amer <islam.amer@jollamobile.com> - 0.14-mer6
+ - Workaround delayed IO keeping loop devices busy
+ - Fix issue with proxy set
+ - Fix vfat UUID missing a -
+ - Fix /tmp permission
+ - use bash as %post script interpreter
+ - kill remaining processes after %post 
+ - Preserve sparseness of files on packing
+ - Generate full /etc/fstab for loop images
+ - Dereference patterns recursively
+ - Version sort and select newest patterns
+ - log useful info about which patterns were selected
+
 * Sun Dec 9 2012 Islam Amer <islam.amer@jollamobile.com> - 0.14-mer1
  - New upstream 0.14
  - Rebased Mer patches

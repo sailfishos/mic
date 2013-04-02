@@ -11,7 +11,7 @@ Name:       mic
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 Summary:    Image Creator for Linux Distributions
 Version:    0.14
-Release:    mer1
+Release:    mer7
 Group:      System/Base
 License:    GPLv2
 BuildArch:  noarch
