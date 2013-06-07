@@ -611,6 +611,9 @@ class Zypp(BackendPlugin):
         self.Z.target().load()
 
     def buildTransaction(self):
+        if not self.Z:
+            self.__initialize_zypp()
+
         if not self.Z.resolver().resolvePool():
             probs = self.Z.resolver().problems()
 
