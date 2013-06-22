@@ -25,6 +25,7 @@ import tempfile
 import shutil
 import urlparse
 import rpm
+import hashlib
 from mic import msger
 from .errors import CreatorError
 from .proxy import get_proxy_for
@@ -446,6 +447,19 @@ def getBaseArch():
 
 def checkRpmIntegrity(bin_rpm, package):
     return runner.quiet([bin_rpm, "-K", "--nosignature", package])
+
+def checkRpmChecksum(package, checksum):
+    # The checksum from rpm includes a preceding type .. eg: sha256-834561aa3...
+    (sumtype, csum) = str(checksum).split("-")
+    h = hashlib.new(sumtype)
+    with open(package, "rb") as f:
+        for chunk in iter(lambda: f.read(512*h.block_size), b''): 
+            h.update(chunk)
+    if h.hexdigest() == csum:
+        return True
+    msger.warning("package %s %s checksum %s from repo.xml is not same as the cached rpm digest %s-%s " \
+                  % (package, sumtype, checksum, sumtype, h.hexdigest()))
+    return False
 
 def checkSig(ts, package):
     """ Takes a transaction set and a package, check it's sigs,

@@ -486,7 +486,7 @@ class Zypp(BackendPlugin):
             else:
                 local = self.getLocalPkgPath(po)
                 if os.path.exists(local):
-                    if self.checkPkg(local) != 0:
+                    if self.checkPkg(local, po.checksum()) != 0:
                         os.unlink(local)
                     else:
                         download_total_size -= int(po.downloadSize())
@@ -680,7 +680,7 @@ class Zypp(BackendPlugin):
 
             filename = self.getLocalPkgPath(po)
             if os.path.exists(filename):
-                if self.checkPkg(filename) == 0:
+                if self.checkPkg(filename, po.checksum()) == 0:
                     continue
 
             dirn = os.path.dirname(filename)
@@ -832,9 +832,13 @@ class Zypp(BackendPlugin):
             # Set to not verify DSA signatures.
             self.ts_pre.setVSFlags(rpm._RPMVSF_NOSIGNATURES|rpm._RPMVSF_NODIGESTS)
 
-    def checkPkg(self, pkg):
+    def checkPkg(self, pkg, checksum=None):
         ret = 1
         if not os.path.exists(pkg):
+            return ret
+        if checksum and not rpmmisc.checkRpmChecksum(pkg, checksum):
+            msger.warning("package %s checksum mismatch - redownloading" \
+                          % (pkg))            
             return ret
         ret = rpmmisc.checkRpmIntegrity('rpm', pkg)
         if ret != 0:
