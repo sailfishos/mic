@@ -162,6 +162,15 @@ class BaseImageCreator(object):
                         "starting image build:\n"
                         "\techo 0 | sudo tee /proc/sys/vm/vdso_enabled")
 
+        if self.target_arch and self.target_arch == "mipsel":
+            for dep in self._dep_checks:
+                if dep == "extlinux":
+                    self._dep_checks.remove(dep)
+
+            if not os.path.exists("/usr/bin/qemu-mipsel") or \
+               not misc.is_statically_linked("/usr/bin/qemu-mipsel"):
+                self._dep_checks.append("qemu-mipsel-static")
+
         # make sure the specified tmpdir and cachedir exist
         if not os.path.exists(self.tmpdir):
             os.makedirs(self.tmpdir)
@@ -694,6 +703,10 @@ class BaseImageCreator(object):
             fs.makedirs(self._instroot + d)
 
         if self.target_arch and self.target_arch.startswith("arm"):
+            self.qemu_emulator = misc.setup_qemu_emulator(self._instroot,
+                                                          self.target_arch)
+
+        if self.target_arch and self.target_arch == "mipsel":
             self.qemu_emulator = misc.setup_qemu_emulator(self._instroot,
                                                           self.target_arch)
 

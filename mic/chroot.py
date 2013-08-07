@@ -303,6 +303,11 @@ def chroot(chrootdir, bindmounts = None, execute = "/bin/bash"):
                 architecture_found = True
                 break
 
+            if 'MIPS' in line:
+                qemu_emulator = misc.setup_qemu_emulator(chrootdir, "mipsel")
+                architecture_found = True
+                break
+
             if 'Intel' in line:
                 architecture_found = True
                 break

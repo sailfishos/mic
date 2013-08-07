@@ -814,24 +814,7 @@ def get_pkglist_in_comps(group, comps):
 def is_statically_linked(binary):
     return ", statically linked, " in runner.outs(['file', binary])
 
-def setup_qemu_emulator(rootdir, arch):
-    # mount binfmt_misc if it doesn't exist
-    if not os.path.exists("/proc/sys/fs/binfmt_misc"):
-        modprobecmd = find_binary_path("modprobe")
-        runner.show([modprobecmd, "binfmt_misc"])
-    if not os.path.exists("/proc/sys/fs/binfmt_misc/register"):
-        mountcmd = find_binary_path("mount")
-        runner.show([mountcmd, "-t", "binfmt_misc", "none", "/proc/sys/fs/binfmt_misc"])
-
-    # qemu_emulator is a special case, we can't use find_binary_path
-    # qemu emulator should be a statically-linked executable file
-    qemu_emulator = "/usr/bin/qemu-arm"
-    if not os.path.exists(qemu_emulator) or not is_statically_linked(qemu_emulator):
-        qemu_emulator = "/usr/bin/qemu-arm-static"
-    if not os.path.exists(qemu_emulator):
-        raise CreatorError("Please install a statically-linked qemu-arm")
-
-    # qemu emulator version check
+def check_armv7_qemu_version(arch, qemu_emulator):
     armv7_list = [arch for arch in rpmmisc.archPolicies.keys() if arch.startswith('armv7')]
     if arch in armv7_list:  # need qemu (>=0.13.0)
         qemuout = runner.outs([qemu_emulator, "-h"])
@@ -842,6 +825,35 @@ def setup_qemu_emulator(rootdir, arch):
                 raise CreatorError("Requires %s version >=0.13 for %s" % (qemu_emulator, arch))
         else:
             msger.warning("Can't get version info of %s, please make sure it's higher than 0.13.0" % qemu_emulator)
+    return None
+
+def setup_qemu_emulator(rootdir, arch):
+    # mount binfmt_misc if it doesn't exist
+    if not os.path.exists("/proc/sys/fs/binfmt_misc"):
+        modprobecmd = find_binary_path("modprobe")
+        runner.show([modprobecmd, "binfmt_misc"])
+    if not os.path.exists("/proc/sys/fs/binfmt_misc/register"):
+        mountcmd = find_binary_path("mount")
+        runner.show([mountcmd, "-t", "binfmt_misc", "none", "/proc/sys/fs/binfmt_misc"])
+    if arch.startswith("arm"):
+        qemu_emulator = "/usr/bin/qemu-arm"
+        qemu_arch = "arm"
+    elif arch == "mipsel":
+        qemu_emulator = "/usr/bin/qemu-mipsel"
+        qemu_arch = "mipsel"
+    else:
+        raise CreatorError("No qemu for arch %s" % arch)
+
+    # qemu_emulator is a special case, we can't use find_binary_path
+    # qemu emulator should be a statically-linked executable file
+    if not os.path.exists(qemu_emulator) or not is_statically_linked(qemu_emulator):
+        qemu_emulator = "%s-static" % qemu_emulator
+    if not os.path.exists(qemu_emulator):
+        raise CreatorError("Please install a statically-linked qemu-%s" % qemu_arch)
+
+    # qemu emulator version check
+    if qemu_arch == "arm":
+        check_armv7_qemu_version(arch, qemu_emulator)
 
     if not os.path.exists(rootdir + "/usr/bin"):
         makedirs(rootdir + "/usr/bin")
@@ -852,22 +864,28 @@ def setup_qemu_emulator(rootdir, arch):
         msger.info('Try to disable selinux')
         runner.show(["/usr/sbin/setenforce", "0"])
 
-    node = "/proc/sys/fs/binfmt_misc/arm"
+    node = "/proc/sys/fs/binfmt_misc/%s" % qemu_arch
     if is_statically_linked(qemu_emulator) and os.path.exists(node):
         return qemu_emulator
 
     # unregister it if it has been registered and is a dynamically-linked executable
     if not is_statically_linked(qemu_emulator) and os.path.exists(node):
         qemu_unregister_string = "-1\n"
-        fd = open("/proc/sys/fs/binfmt_misc/arm", "w")
+        fd = open(node, "w")
         fd.write(qemu_unregister_string)
         fd.close()
 
     # register qemu emulator for interpreting other arch executable file
     if not os.path.exists(node):
         qemu_arm_string = ":arm:M::\\x7fELF\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\x28\\x00:\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\x00\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xfa\\xff\\xff\\xff:%s:\n" % qemu_emulator
-        fd = open("/proc/sys/fs/binfmt_misc/register", "w")
-        fd.write(qemu_arm_string)
+        qemu_mipsel_string = ":mipsel:M::\\x7fELF\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\x08\\x00:\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\x00\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xfe\\xff\\xff\\xff:%s:\n" % qemu_emulator
+        binfmt_register = "/proc/sys/fs/binfmt_misc/register"
+        if qemu_arch == "arm":
+            qemu_register_string = qemu_arm_string
+        elif qemu_arch == "mipsel":
+            qemu_register_string = qemu_mipsel_string
+        fd = open(binfmt_register, "w")
+        fd.write(qemu_register_string)
         fd.close()
 
     return qemu_emulator
