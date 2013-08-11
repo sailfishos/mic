@@ -657,7 +657,7 @@ class BtrfsDiskMount(DiskMount):
         if rc != 0:
             raise MountError("Error creating %s filesystem on disk %s" % (self.fstype,self.disk.device))
 
-        self.uuid = self.__parse_field(runner.outs([self.blkidcmd, self.disk.device]), "UUID")
+        self.uuid = self.__parse_field(runner.outs([self.blkidcmd, "-c /dev/null", self.disk.device]), "UUID")
 
     def __resize_filesystem(self, size = None):
         current_size = os.stat(self.disk.lofile)[stat.ST_SIZE]
