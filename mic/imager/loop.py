@@ -119,11 +119,10 @@ class LoopImageCreator(BaseImageCreator):
 
         self.__blocksize = 4096
         if self.ks:
-            self.__fstype = kickstart.get_image_fstype(self.ks,
-                                                       "ext3")
-            self.__fsopts = kickstart.get_image_fsopts(self.ks,
-                                                       "defaults,noatime")
-
+            #self.__fstype = kickstart.get_image_fstype(self.ks,
+            #                                           "ext3")
+            #self.__fsopts = kickstart.get_image_fsopts(self.ks,
+            #                                           "defaults,noatime")
             allloops = []
             for part in sorted(kickstart.get_partitions(self.ks),
                                key=lambda p: p.mountpoint):
@@ -144,22 +143,49 @@ class LoopImageCreator(BaseImageCreator):
                         label = mp.split('/')[-1]
 
                 imgname = misc.strip_end(label, '.img') + '.img'
-                allloops.append({
-                    'mountpoint': mp,
-                    'label': label,
-                    'name': imgname,
-                    'size': part.size or 4096L * 1024 * 1024,
-                    'fstype': part.fstype or 'ext3',
-                    'loop': None,  # to be created in _mount_instroot
-                    })
+
+                loop_data = {'mountpoint': mp,
+                             'label': label,
+                             'name': imgname,
+                             'size': part.size or 4096L * 1024 * 1024,
+                             'fstype': part.fstype or 'ext3',
+                             'fsopts': part.fsopts,
+                             'loop': None,  # to be created in _mount_instroot
+                             }
+
+                if loop_data['fstype'] == "btrfs":
+                    subvols = []
+                    snaps = []
+                    for item in kickstart.get_btrfs_list(self.ks):
+                        if item.parent == label:
+                            if item.subvol:
+                                subvols.append({'size': 0, # In sectors
+                                                'mountpoint': item.mountpoint, # Mount relative to chroot
+                                                'fstype': "btrfs", # Filesystem type
+                                                'fsopts': "subvol=%s" %  item.name, # Filesystem mount options
+                                                'device': None, # kpartx device node for partition
+                                                'mount': None, # Mount object
+                                                'subvol': item.name, # Subvolume name
+                                                'label': item.label,
+                                                'boot': False, # Bootable flag
+                                                'mounted': False, # Mount flag
+                                                'quota': item.quota,
+                                                'parent': item.parent,
+                                           })
+                            if item.snapshot:
+                                snaps.append({'name': item.name, 'base': item.base})
+                    else:
+                        loop_data['subvolumes'] = subvols
+                        loop_data['snapshots'] = snaps
+                      
+                allloops.append(loop_data)
+
             self._instloops = allloops
 
         else:
             self.__fstype = None
             self.__fsopts = None
             self._instloops = []
-
-        self.__imgdir = None
 
         if self.ks:
             self.__image_size = kickstart.get_image_size(self.ks,
@@ -201,9 +227,9 @@ class LoopImageCreator(BaseImageCreator):
     fslabel = property(__get_fslabel, __set_fslabel)
 
     def __get_image(self):
-        if self.__imgdir is None:
+        if self._imgdir is None:
             raise CreatorError("_image is not valid before calling mount()")
-        return os.path.join(self.__imgdir, self._img_name)
+        return os.path.join(self._imgdir, self._img_name)
     #The location of the image file.
     #
     #This is the path to the filesystem image. Subclasses may use this path
@@ -291,11 +317,6 @@ class LoopImageCreator(BaseImageCreator):
         if base_on and self._image != base_on:
             shutil.copyfile(base_on, self._image)
 
-    def _check_imgdir(self):
-        if self.__imgdir is None:
-            self.__imgdir = self._mkdtemp()
-
-
     def _get_fstab(self):
         s = ""
         for p in self._instloops:
@@ -304,17 +325,18 @@ class LoopImageCreator(BaseImageCreator):
                'device': "UUID=%s" % p['loop'].uuid,
                'mountpoint': p['mountpoint'],
                'fstype': p['fstype'],
-               'fsopts': self.__fsopts }
+               'fsopts': "defaults,noatime" if not p['fsopts'] else p['fsopts']}
 
-            #if p['mountpoint'] == "/":
-                #for subvol in self._instloops.subvolumes:
-                #    if subvol['mountpoint'] == "/":
-                #        continue
-                #    s += "%(device)s  %(mountpoint)s  %(fstype)s  %(fsopts)s 0 0\n" % {
-                #         'device': "/dev/%s%-d" % (p['disk'], p['num']),
-                #         'mountpoint': subvol['mountpoint'],
-                #         'fstype': p['fstype'],
-                #         'fsopts': "defaults,noatime" if not subvol['fsopts'] else subvol['fsopts']}
+            if p['mountpoint'] == "/":
+                for subvol in p['subvolumes']:
+                    if subvol['mountpoint'] == "/":
+                        continue
+                    s += "%(device)s  %(mountpoint)s  %(fstype)s  %(fsopts)s 0 0\n" % {
+                         #'device': "/dev/%s%-d" % (p['disk'], p['num']),
+                         'device': "UUID=%s" % p['loop'].uuid,
+                         'mountpoint': subvol['mountpoint'],
+                         'fstype': p['fstype'],
+                         'fsopts': "defaults,noatime" if not subvol['fsopts'] else subvol['fsopts']}
 
         s += self._get_fstab_special()
         return s
@@ -347,23 +369,24 @@ class LoopImageCreator(BaseImageCreator):
             mp = os.path.join(self._instroot, loop['mountpoint'].lstrip('/'))
             size = loop['size'] * 1024L * 1024L
             imgname = loop['name']
+            fsopts = loop['fsopts']
+
+            dargs = [fs.SparseLoopbackDisk(os.path.join(self._imgdir, imgname), size),
+                     mp, fstype, self._blocksize, loop['label']]
+            dkwargs = {"fsopts" : fsopts}
 
             if fstype in ("ext2", "ext3", "ext4"):
                 MyDiskMount = fs.ExtDiskMount
             elif fstype == "btrfs":
                 MyDiskMount = fs.BtrfsDiskMount
+                dkwargs["subvolumes"] = loop["subvolumes"]
+                dkwargs["snapshots"] = loop["snapshots"]
             elif fstype in ("vfat", "msdos"):
                 MyDiskMount = fs.VfatDiskMount
             else:
                 msger.error('Cannot support fstype: %s' % fstype)
 
-            loop['loop'] = MyDiskMount(fs.SparseLoopbackDisk(
-                                           os.path.join(self.__imgdir, imgname),
-                                           size),
-                                       mp,
-                                       fstype,
-                                       self._blocksize,
-                                       loop['label'])
+            loop['loop'] = MyDiskMount(*dargs, **dkwargs)
             loop['uuid'] = loop['loop'].uuid
 
             try:
@@ -375,7 +398,9 @@ class LoopImageCreator(BaseImageCreator):
 
     def _unmount_instroot(self):
         for item in reversed(self._instloops):
-            item['loop'].cleanup()
+            loop = item.get('loop', None)
+            if loop:
+                loop.cleanup()
 
     def _stage_final_image(self):
 
@@ -385,7 +410,7 @@ class LoopImageCreator(BaseImageCreator):
             self._resparse()
 
         for item in self._instloops:
-            imgfile = os.path.join(self.__imgdir, item['name'])
+            imgfile = os.path.join(self._imgdir, item['name'])
             if item['fstype'] == "ext4":
                 runner.show('/sbin/tune2fs -O ^huge_file,extents,uninit_bg %s '
                             % imgfile)
@@ -393,13 +418,13 @@ class LoopImageCreator(BaseImageCreator):
                 misc.compressing(imgfile, self.compress_image)
 
         if not self.pack_to:
-            for item in os.listdir(self.__imgdir):
-                shutil.move(os.path.join(self.__imgdir, item),
+            for item in os.listdir(self._imgdir):
+                shutil.move(os.path.join(self._imgdir, item),
                             os.path.join(self._outdir, item))
         else:
             msger.info("Pack all loop images together to %s" % self.pack_to)
             dstfile = os.path.join(self._outdir, self.pack_to)
-            misc.packing(dstfile, self.__imgdir)
+            misc.packing(dstfile, self._imgdir)
 
         if self.pack_to:
             mountfp_xml = os.path.splitext(self.pack_to)[0]
@@ -410,18 +435,4 @@ class LoopImageCreator(BaseImageCreator):
         save_mountpoints(os.path.join(self._outdir, mountfp_xml),
                          self._instloops,
                          self.target_arch)
-
-    def copy_attachment(self):
-        if not hasattr(self, '_attachment') or not self._attachment:
-            return
-
-        self._check_imgdir()
-
-        msger.info("Copying attachment files...")
-        for item in self._attachment:
-            if not os.path.exists(item):
-                continue
-            dpath = os.path.join(self.__imgdir, os.path.basename(item))
-            msger.verbose("Copy attachment %s to %s" % (item, dpath))
-            shutil.copy(item, dpath)
 

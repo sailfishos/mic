@@ -288,14 +288,11 @@ class Zypp(BackendPlugin):
         for xitem in installed_pkgs:
             if zypp.isKindPattern(xitem):
                 item = self._castKind(xitem)
-                groups.add(item.name())
                 msger.debug("%s is going to be derefed" % item.name())
+                groups.add(item.name())
+                self.selectGroup(item.name())
 
-        for grp in groups:
-            self.selectGroup(grp)
-        else:
-            return True # signal that no dereffing happened
-        return False # some groups were found
+        return groups
 
     def selectGroup(self, grp, include = ksparser.GROUP_DEFAULT):
         if not self.Z:
@@ -909,8 +906,9 @@ class Zypp(BackendPlugin):
                        reverse=True)
 
         if items:
-            url = self.get_url(items[0])
-            proxies = self.get_proxies(items[0])
+            item = self._castKind(items[0])
+            url = self.get_url(item)
+            proxies = self.get_proxies(item)
             return (url, proxies)
 
         return (None, None)

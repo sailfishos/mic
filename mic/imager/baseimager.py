@@ -66,6 +66,7 @@ class BaseImageCreator(object):
         self.pkgmgr = pkgmgr
 
         self.__builddir = None
+        self.__imgdir = None
         self.__bindmounts = []
 
         self.ks = None
@@ -213,7 +214,11 @@ class BaseImageCreator(object):
     Note also, this is a read-only attribute.
 
     """
-
+    def __get_imgdir(self):
+        if self.__imgdir is None:
+            raise CreatorError("_imgdir is not valid before calling mount()")
+        return self.__imgdir
+    _imgdir = property(__get_imgdir)
 
     #
     # Hooks for subclasses
@@ -429,7 +434,13 @@ class BaseImageCreator(object):
                      into _instroot.
 
         """
-        return {}
+
+        env = {}
+        if hasattr(self, 'tokenmap'):
+            env.update(self.tokenmap)
+
+        env["IMG_NAME"] = self._name
+        return env
 
     def __get_imgname(self):
         return self.name
@@ -537,7 +548,7 @@ class BaseImageCreator(object):
 
         This method may be used by subclasses to create a temporary directory
         for use in building the final image - e.g. a subclass might create
-        a temporary directory in order to bundle a set of files into a package.
+         directory in order to bundle a set of files into a package.
 
         The subclass may delete this directory if it wishes, but it will be
         automatically deleted by cleanup().
@@ -594,7 +605,6 @@ class BaseImageCreator(object):
         os.close(f)
         return path
 
-
     #
     # Actual implementation
     #
@@ -608,6 +618,9 @@ class BaseImageCreator(object):
         except OSError, (err, msg):
             raise CreatorError("Failed create build directory in %s: %s" %
                                (self.tmpdir, msg))
+    def _check_imgdir(self):
+        if self.__imgdir is None:
+            self.__imgdir = self._mkdtemp()
 
     def get_cachedir(self, cachedir = None):
         if self.cachedir:
@@ -827,7 +840,17 @@ class BaseImageCreator(object):
             msger.warning("Skipping missing package '%s'" % (pkg,))
 
     def __deref_groups(self, pkg_manager):
-        while not pkg_manager.derefGroups():
+
+        if not hasattr(pkg_manager, "derefGroups"):
+            return
+
+        done = set()
+        # first round
+        deref = pkg_manager.derefGroups()
+        # keep looping until there are no more additions
+        while deref != done:
+            done = deref
+            deref = pkg_manager.derefGroups()
             msger.debug("dereffing groups")
 
     def __select_groups(self, pkg_manager):
@@ -1008,7 +1031,8 @@ class BaseImageCreator(object):
 
             if not s.inChroot:
                 env["INSTALL_ROOT"] = self._instroot
-                env["IMG_NAME"] = self._name
+                env["IMG_OUT_DIR"] = self.destdir
+ 
                 preexec = None
                 script = path
             else:
@@ -1054,7 +1078,6 @@ class BaseImageCreator(object):
             env = self._get_post_scripts_env(s.inChroot)
 
             env["INSTALL_ROOT"] = self._instroot
-            env["IMG_NAME"] = self._name
             preexec = None
             script = path
 
@@ -1181,6 +1204,51 @@ class BaseImageCreator(object):
                         os.path.join(destdir, f))
             self.outimage.append(os.path.join(destdir, f))
             self.do_genchecksum(os.path.join(destdir, f))
+
+        self.post_package(destdir)
+
+    def post_package(self, destdir):
+        self._run_pack_script(destdir)
+
+    def _run_pack_script(self, destdir):
+        
+        msger.info("Running pack scripts ...")
+        for s in kickstart.get_pack_scripts(self.ks):
+            (fd, path) = tempfile.mkstemp(prefix = "ks-script-",
+                                          dir = "/tmp")
+
+            s.interp = "/bin/bash"
+            s.script = s.script.replace("\r", "")
+            os.write(fd, s.script)
+            os.close(fd)
+            os.chmod(path, 0700)
+
+            # the name is post but it shouldn't be doing anything post specific
+            env = self._get_post_scripts_env(s.inChroot)
+ 
+            env["IMG_OUT_DIR"] = destdir
+            preexec = None
+            script = path
+
+            try:
+                try:
+                    retcode = subprocess.call([s.interp, script],
+                                              preexec_fn = preexec,
+                                              env = env,
+                                              stdout = sys.stdout,
+                                              stderr = sys.stderr)
+                    # exit status 0 is False
+                    if retcode:
+                        if s.errorOnFail:
+                            msger.info("Script returned with non zero status, failing.")
+                            raise CreatorError("Failed to execute %%pack script with %s" % s.interp)
+                        else:
+                            msger.info("Script returned with non zero status, ignoring.")
+                except OSError, (err, msg):
+                    raise CreatorError("Failed to execute %%pack script "
+                                       "with '%s' : %s" % (s.interp, msg))
+            finally:
+                os.unlink(path)
 
     def print_outimage_info(self):
         msg = "The new image can be found here:\n"
@@ -1319,7 +1387,17 @@ class BaseImageCreator(object):
         """ Subclass implement it to handle attachment files
         NOTE: This needs to be called before unmounting the instroot.
         """
-        pass
+        if not hasattr(self, '_attachment') or not self._attachment:
+            return
+
+        msger.info("Copying attachment files...")
+        for item in self._attachment:
+            if not os.path.exists(item):
+                continue
+            dpath = os.path.join(self.destdir, os.path.basename(item))
+            msger.verbose("Copy attachment %s to %s" % (item, dpath))
+            shutil.copy(item, dpath)
+            self.outimage.append(dpath)
 
     def get_pkg_manager(self):
         return self.pkgmgr(target_arch = self.target_arch,

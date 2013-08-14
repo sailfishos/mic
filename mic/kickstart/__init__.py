@@ -38,6 +38,41 @@ import custom_commands.desktop as desktop
 import custom_commands.moblinrepo as moblinrepo
 import custom_commands.micboot as micboot
 import custom_commands.partition as partition
+import custom_commands.btrfs as btrfs
+
+class PrePackages(ksparser.Packages):
+
+    def __str__(self):
+        """Return a string formatted for output to a kickstart file."""
+        pkgs = ""
+
+        if not self.default:
+            grps = self.groupList
+            grps.sort()
+            for grp in grps:
+                pkgs += "%s\n" % grp.__str__()
+
+            p = self.packageList
+            p.sort()
+            for pkg in p:
+                pkgs += "%s\n" % pkg
+
+            grps = self.excludedGroupList
+            grps.sort()
+            for grp in grps:
+                pkgs += "-%s\n" % grp.__str__()
+
+            p = self.excludedList
+            p.sort()
+            for pkg in p:
+                pkgs += "-%s\n" % pkg
+
+            if pkgs == "":
+                return ""
+
+        retval = "\n%prepackages"
+
+        return retval + "\n" + pkgs + "\n%end\n"
 
 class PrepackageSection(kssections.Section):
     sectionOpen = "%prepackages"
@@ -54,6 +89,40 @@ class PrepackageSection(kssections.Section):
     def handleHeader(self, lineno, args):
         kssections.Section.handleHeader(self, lineno, args)
 
+class Attachment(ksparser.Packages):
+
+    def __str__(self):
+        """Return a string formatted for output to a kickstart file."""
+        pkgs = ""
+
+        if not self.default:
+            grps = self.groupList
+            grps.sort()
+            for grp in grps:
+                pkgs += "%s\n" % grp.__str__()
+
+            p = self.packageList
+            p.sort()
+            for pkg in p:
+                pkgs += "%s\n" % pkg
+
+            grps = self.excludedGroupList
+            grps.sort()
+            for grp in grps:
+                pkgs += "-%s\n" % grp.__str__()
+
+            p = self.excludedList
+            p.sort()
+            for pkg in p:
+                pkgs += "-%s\n" % pkg
+
+            if pkgs == "":
+                return ""
+
+        retval = "\n%attachment"
+
+        return retval + "\n" + pkgs + "\n%end\n"
+
 class AttachmentSection(kssections.Section):
     sectionOpen = "%attachment"
 
@@ -68,6 +137,23 @@ class AttachmentSection(kssections.Section):
 
     def handleHeader(self, lineno, args):
         kssections.Section.handleHeader(self, lineno, args)
+
+KS_SCRIPT_PACK = 100
+
+class PackScriptSection(kssections.ScriptSection):
+    sectionOpen = "%pack"
+
+    def _resetScript(self):
+        kssections.ScriptSection._resetScript(self)
+        self._script["type"] = KS_SCRIPT_PACK
+
+class PackScript(ksparser.Script):
+
+    def __str__(self):
+
+        retval = ksparser.Script.__str__(self)
+        retval = "\n%pack" + retval
+        return retval
 
 def apply_wrapper(func):
     def wrapper(*kargs, **kwargs):
@@ -102,17 +188,30 @@ def read_kickstart(path):
     commandMap[using_version]["bootloader"] = micboot.Moblin_Bootloader
     commandMap[using_version]["part"] = partition.MeeGo_Partition
     commandMap[using_version]["partition"] = partition.MeeGo_Partition
+    commandMap[using_version]["btrfs"] = btrfs.BTRFS
+
     dataMap[using_version]["RepoData"] = moblinrepo.Moblin_RepoData
     dataMap[using_version]["PartData"] = partition.MeeGo_PartData
+    dataMap[using_version]["BTRFSData"] = btrfs.BTRFSData
+
     superclass = ksversion.returnClassForVersion(version=using_version)
 
     class KSHandlers(superclass):
         def __init__(self, mapping={}):
             superclass.__init__(self, mapping=commandMap[using_version])
-            self.prepackages = ksparser.Packages()
-            self.attachment = ksparser.Packages()
+            self.prepackages = PrePackages()
+            self.attachment = Attachment()
+
+        def __str__(self):
+            retval = superclass.__str__(self)
+            if self.prepackages:
+                retval += self.prepackages.__str__()
+            if self.attachment:
+                retval += self.attachment.__str__()
+            return retval
 
     ks = ksparser.KickstartParser(KSHandlers(), errorsAreFatal=False)
+    ks.registerSection(PackScriptSection(ks.handler, dataObj=PackScript))
     ks.registerSection(PrepackageSection(ks.handler))
     ks.registerSection(AttachmentSection(ks.handler))
 
@@ -817,6 +916,9 @@ def get_excluded(ks, required = []):
 def get_partitions(ks, required = []):
     return ks.handler.partition.partitions
 
+def get_btrfs_list(ks, required = []):
+    return ks.handler.btrfs.btrfsList
+
 def ignore_missing(ks):
     return ks.handler.packages.handleMissing == ksconstants.KS_MISSING_IGNORE
 
@@ -841,6 +943,13 @@ def get_pre_scripts(ks):
     scripts = []
     for s in ks.handler.scripts:
         if s.type == ksparser.KS_SCRIPT_PRE:
+            scripts.append(s)
+    return scripts
+
+def get_pack_scripts(ks):
+    scripts = []
+    for s in ks.handler.scripts:
+        if s.type == KS_SCRIPT_PACK:
             scripts.append(s)
     return scripts
 

@@ -96,3 +96,4 @@ class FsImageCreator(BaseImageCreator):
 
             self.outimage.append(dst)
 
+            self.post_package(destdir)

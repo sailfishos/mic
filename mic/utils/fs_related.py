@@ -614,7 +614,7 @@ class VfatDiskMount(DiskMount):
 
 class BtrfsDiskMount(DiskMount):
     """A DiskMount object that is able to format/resize btrfs filesystems."""
-    def __init__(self, disk, mountdir, fstype, blocksize, fslabel, rmmountdir=True, skipformat = False, fsopts = None):
+    def __init__(self, disk, mountdir, fstype, blocksize, fslabel, rmmountdir=True, skipformat = False, fsopts = None, subvolumes=None, snapshots=None):
         self.__check_btrfs()
         DiskMount.__init__(self, disk, mountdir, fstype, rmmountdir)
         self.blocksize = blocksize
@@ -623,7 +623,209 @@ class BtrfsDiskMount(DiskMount):
         self.skipformat = skipformat
         self.fsopts = fsopts
         self.blkidcmd = find_binary_path("blkid")
+        self.btrfscmd = find_binary_path("btrfs")
         self.btrfsckcmd = find_binary_path("btrfsck")
+        self.subvolumes = subvolumes
+        self.snapshots = snapshots
+        self.snapped = False
+
+    def __get_subvolume_metadata(self):
+        #subvolume_metadata_file = "%s/.subvolume_metadata" % self.disk.mountdir
+        subvolume_metadata_file = "%s.subvolume_metadata" % self.disk.lofile
+        if not os.path.exists(subvolume_metadata_file):
+            return
+
+        fd = open(subvolume_metadata_file, "r")
+        content = fd.read()
+        fd.close()
+
+        for line in content.splitlines():
+            items = line.split("\t")
+            if items and len(items) == 4:
+                self.subvolumes.append({'size': 0, # In sectors
+                                        'mountpoint': items[2], # Mount relative to chroot
+                                        'fstype': "btrfs", # Filesystem type
+                                        'fsopts': items[3] + ",subvol=%s" %  items[1], # Filesystem mount options
+                                        'disk': p['disk'], # physical disk name holding partition
+                                        'device': None, # kpartx device node for partition
+                                        'mount': None, # Mount object
+                                        'subvol': items[1], # Subvolume name
+                                        'boot': False, # Bootable flag
+                                        'mounted': False # Mount flag
+                                   })
+
+    def __get_subvolume_id(self, rootpath, subvol):
+        argv = [ self.btrfscmd, "subvolume", "list", rootpath ]
+
+        rc, out = runner.runtool(argv)
+        msger.debug(out)
+
+        if rc != 0:
+            raise MountError("Failed to get subvolume id from %s', return code: %d." % (rootpath, rc))
+
+        subvolid = -1
+        for line in out.splitlines():
+            if line.endswith(" path %s" % subvol):
+                subvolid = line.split()[1]
+                if not subvolid.isdigit():
+                    raise MountError("Invalid subvolume id: %s" % subvolid)
+                subvolid = int(subvolid)
+                break
+        return subvolid
+
+    def __create_subvolume_snapshots(self):
+        if not self.snapshots or self.snapped:
+            return
+
+        """ Remount with subvolid=0 """
+        if self.fsopts:
+            mountopts = self.fsopts + ",subvolid=0"
+        else:
+            mountopts = "subvolid=0"
+
+        rc = runner.show([self.umountcmd, self.mountdir])
+        if rc != 0:
+            raise MountError("Failed to umount %s" % self.mountdir)
+
+        rc = runner.show([self.mountcmd, "-o", mountopts, self.disk.device, self.mountdir])
+        if rc != 0:
+            raise MountError("Failed to mount %s" % self.mountdir)
+                                                                                                                                                               
+        """ Create all the subvolume snapshots """
+        for snap in self.snapshots:
+            subvolpath = os.path.join(self.mountdir, snap["base"])
+            snapshotpath = os.path.join(self.mountdir, snap["name"])
+            msger.info("Creating snapshot %s based on %s..." % (snap["name"] ,snap["base"]))
+            rc = runner.show([ self.btrfscmd, "subvolume", "snapshot", subvolpath, snapshotpath ])
+            if rc != 0:
+                raise MountError("Failed to create subvolume snapshot '%s' for '%s', return code: %d." % (snapshotpath, subvolpath, rc))
+
+        self.snapped = True
+
+    def __create_subvolume_metadata(self):
+        if len(self.subvolumes) == 0:
+            return
+
+        argv = [ self.btrfscmd, "subvolume", "list", self.mountdir ]
+        rc, out = runner.runtool(argv)
+        msger.debug(out)
+
+        if rc != 0:
+            raise MountError("Failed to get subvolume id from %s', return code: %d." % (self.mountdir, rc))
+
+        subvolid_items = out.splitlines()
+        subvolume_metadata = ""
+        for subvol in self.subvolumes:
+            for line in subvolid_items:
+                if line.endswith(" path %s" % subvol["subvol"]):
+                    subvolid = line.split()[1]
+                    if not subvolid.isdigit():
+                        raise MountError("Invalid subvolume id: %s" % subvolid)
+
+                    subvolid = int(subvolid)
+                    fsopts = subvol["fsopts"]
+                    subvolume_metadata += "%d\t%s\t%s\t%s\n" % (subvolid, subvol["subvol"], subvol['mountpoint'], fsopts)
+
+        if subvolume_metadata:
+            fd = open("%s.subvolume_metadata" % self.disk.lofile,"w")
+            #fd = open("%s/.subvolume_metadata" % self.mountdir, "w")
+            fd.write(subvolume_metadata)
+            fd.close()
+
+    def __create_subvolumes(self):
+        """ Create all the subvolumes """
+        if not self.subvolumes:
+            return
+
+        for subvol in self.subvolumes:
+            if subvol.get("quota", False):
+                argv = [ self.btrfscmd, "quota", "enable", self.mountdir ]
+
+                rc = runner.show(argv)
+                if rc != 0:
+                    raise MountError("Failed to enable quota '%s', return code: %d." % (subvol["subvol"], rc))
+                
+            argv = [ self.btrfscmd, "subvolume", "create", self.mountdir + "/" + subvol["subvol"]]
+
+            rc = runner.show(argv)
+            if rc != 0:
+                raise MountError("Failed to create subvolume '%s', return code: %d." % (subvol["subvol"], rc))
+
+        """ Set default subvolume, subvolume for "/" is default """
+        subvol = None
+        for subvolume in self.subvolumes:
+            if subvolume["mountpoint"] == "/":
+                subvol = subvolume
+                break
+
+        if subvol:
+            """ Get default subvolume id """
+            subvolid = self.__get_subvolume_id(self.mountdir, subvol["subvol"])
+            """ Set default subvolume """
+            if subvolid != -1:
+                rc = runner.show([ self.btrfscmd, "subvolume", "set-default", "%d" % subvolid, self.mountdir])
+                if rc != 0:
+                    raise MountError("Failed to set default subvolume id: %d', return code: %d." % (subvolid, rc))
+
+        self.__create_subvolume_metadata()
+
+    def __mount_subvolumes(self):
+        if self.skipformat:
+            """ Get subvolume info """
+            self.__get_subvolume_metadata()
+            """ Set default mount options """
+            if len(self.subvolumes) != 0:
+                for subvol in self.subvolumes:
+                    if subvol["mountpoint"] == "/":
+                        self.fsopts = subvol["fsopts"]
+                        break
+
+        if len(self.subvolumes) == 0:
+            """ Return directly if no subvolumes """
+            return
+
+        """ Remount to make default subvolume mounted """
+        rc = runner.show([self.umountcmd, self.mountdir])
+        if rc != 0:
+            raise MountError("Failed to umount %s" % self.mountdir)
+
+        rc = runner.show([self.mountcmd, "-o", self.fsopts, self.disk.device, self.mountdir])
+        if rc != 0:
+            raise MountError("Failed to mount %s on %s" % (self.disk.device, self.mountdir))
+
+        for subvol in self.subvolumes:
+            if subvol["mountpoint"] == "/":
+                continue
+            subvolid = self.__get_subvolume_id(self.mountdir, subvol["subvol"])
+            if subvolid == -1:
+                msger.debug("WARNING: invalid subvolume %s" % subvol["subvol"])
+                continue
+            """ Replace subvolume name with subvolume ID """
+            opts = []
+            opts.extend(["subvolrootid=0", "subvolid=%s" % subvolid])
+            fsopts = ",".join(opts)
+            subvol['fsopts'] = fsopts
+            mountpoint = os.path.join(self.mountdir + subvol['mountpoint'])
+            makedirs(mountpoint)
+            rc = runner.show([self.mountcmd, "-o", fsopts, self.disk.device, mountpoint])
+            if rc != 0:
+                raise MountError("Failed to mount subvolume %s to %s" % (subvol["subvol"], mountpoint))
+            subvol["mounted"] = True
+
+    def __unmount_subvolumes(self):
+        """ It may be called multiple times, so we need to chekc if it is still mounted. """
+        for subvol in self.subvolumes:
+            if subvol["mountpoint"] == "/":
+                continue
+            if not subvol["mounted"]:
+                continue
+            mountpoint = self.mountdir + subvol['mountpoint']
+            rc = runner.show([self.umountcmd, mountpoint])
+            if rc != 0:
+                raise MountError("Failed to unmount subvolume %s from %s" % (subvol["subvol"], mountpoint))
+            subvol["mounted"] = False
+
+        self.__create_subvolume_snapshots()
 
     def __check_btrfs(self):
         found = False
@@ -689,6 +891,12 @@ class BtrfsDiskMount(DiskMount):
     def mount(self, options = None):
         self.__create()
         DiskMount.mount(self, options)
+        self.__create_subvolumes()
+        self.__mount_subvolumes()
+
+    def unmount(self):
+        self.__unmount_subvolumes()
+        DiskMount.unmount(self)
 
     def __fsck(self):
         msger.debug("Checking filesystem %s" % self.disk.lofile)

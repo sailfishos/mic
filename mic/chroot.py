@@ -189,9 +189,10 @@ def kill_processes(chrootdir):
         try:
             if os.readlink(fp) == chrootdir:
                 pid = int(fp.split("/")[2])
+                msger.debug("Killing %s" % pid)
                 os.kill(pid, 9)
-        except:
-            pass
+        except Exception, e:
+            msger.warning("Failed to kill %s %s" % (pid, e))
 
 def cleanup_chrootenv(chrootdir, bindmounts = None, globalmounts = []):
     global chroot_lockfd, chroot_lock
