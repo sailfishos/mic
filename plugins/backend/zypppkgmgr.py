@@ -226,23 +226,24 @@ class Zypp(BackendPlugin):
             q.addAttribute(zypp.SolvAttr.provides, pkg)
             q.addAttribute(zypp.SolvAttr.name,'')
 
-            for item in sorted(
-                            q.queryResults(self.Z.pool()),
-                            cmp=lambda x,y: cmpEVR(x.edition(), y.edition()),
-                            reverse=True):
+            items = q.queryResults(self.Z.pool())
+            if not items:
+                for item in sorted(items,
+                                   cmp=lambda x,y: cmpEVR(x.edition(), y.edition()),
+                                   reverse=True):
 
-                xitem = self._castKind(item)
-                if xitem.name() in self.excpkgs.keys() and \
-                   self.excpkgs[xitem.name()] == xitem.repoInfo().name():
-                    continue
-                if xitem.name() in self.incpkgs.keys() and \
-                   self.incpkgs[xitem.name()] != xitem.repoInfo().name():
-                    continue
+                    xitem = self._castKind(item)
+                    if xitem.name() in self.excpkgs.keys() and \
+                       self.excpkgs[xitem.name()] == xitem.repoInfo().name():
+                        continue
+                    if xitem.name() in self.incpkgs.keys() and \
+                       self.incpkgs[xitem.name()] != xitem.repoInfo().name():
+                        continue
 
-                found = True
-                obspkg = self.whatObsolete(xitem.name())
-                markPoolItem(obspkg, item)
-                break
+                    found = True
+                    obspkg = self.whatObsolete(xitem.name())
+                    markPoolItem(obspkg, item)
+                    break
 
         if found:
             return None
@@ -835,7 +836,7 @@ class Zypp(BackendPlugin):
             return ret
         if checksum and not rpmmisc.checkRpmChecksum(pkg, checksum):
             msger.warning("package %s checksum mismatch - redownloading" \
-                          % (pkg))            
+                          % (pkg))
             return ret
         ret = rpmmisc.checkRpmIntegrity('rpm', pkg)
         if ret != 0:
@@ -901,11 +902,12 @@ class Zypp(BackendPlugin):
         q.addKind(zypp.ResKind.package)
         q.setMatchExact()
         q.addAttribute(zypp.SolvAttr.name, pkgname)
-        items = sorted(q.queryResults(self.Z.pool()),
-                       cmp=lambda x,y: cmpEVR(x.edition(), y.edition()),
-                       reverse=True)
+        items = q.queryResults(self.Z.pool())
 
         if items:
+            items = sorted(items,
+                           cmp=lambda x,y: cmpEVR(x.edition(), y.edition()),
+                           reverse=True)
             item = self._castKind(items[0])
             url = self.get_url(item)
             proxies = self.get_proxies(item)
