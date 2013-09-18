@@ -989,12 +989,12 @@ class BaseImageCreator(object):
                 pkg_manager.runInstall(checksize)
             except CreatorError, e:
                 raise
+            else:
+                self._pkgs_content = pkg_manager.getAllContent()
+                self._pkgs_urls = pkg_manager.getAllUrls()
+                self._pkgs_license = pkg_manager.getPkgsLicense()
+                self.__attachment_packages(pkg_manager)
         finally:
-            self._pkgs_content = pkg_manager.getAllContent()
-            self._pkgs_urls = pkg_manager.getAllUrls()
-            self._pkgs_license = pkg_manager.getPkgsLicense()
-            self.__attachment_packages(pkg_manager)
-
             pkg_manager.close()
 
         # hook post install

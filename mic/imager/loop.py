@@ -162,7 +162,7 @@ class LoopImageCreator(BaseImageCreator):
                                 subvols.append({'size': 0, # In sectors
                                                 'mountpoint': item.mountpoint, # Mount relative to chroot
                                                 'fstype': "btrfs", # Filesystem type
-                                                'fsopts': "subvol=%s" %  item.name, # Filesystem mount options
+                                                'fsopts': "defaults,noatime,subvol=%s" %  item.name, # Filesystem mount options
                                                 'device': None, # kpartx device node for partition
                                                 'mount': None, # Mount object
                                                 'subvol': item.name, # Subvolume name

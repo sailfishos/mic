@@ -802,9 +802,8 @@ class BtrfsDiskMount(DiskMount):
                 continue
             """ Replace subvolume name with subvolume ID """
             opts = []
-            opts.extend(["subvolrootid=0", "subvolid=%s" % subvolid])
+            opts.extend(["defaults", "subvolrootid=0", "subvolid=%s" % subvolid])
             fsopts = ",".join(opts)
-            subvol['fsopts'] = fsopts
             mountpoint = os.path.join(self.mountdir + subvol['mountpoint'])
             makedirs(mountpoint)
             rc = runner.show([self.mountcmd, "-o", fsopts, self.disk.device, mountpoint])
