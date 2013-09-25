@@ -1213,7 +1213,8 @@ class BaseImageCreator(object):
     def _run_pack_script(self, destdir):
         
         msger.info("Running pack scripts ...")
-        for s in kickstart.get_pack_scripts(self.ks):
+        pack_scripts = kickstart.get_pack_scripts(self.ks)
+        for s in pack_scripts:
             (fd, path) = tempfile.mkstemp(prefix = "ks-script-",
                                           dir = "/tmp")
 
@@ -1249,6 +1250,10 @@ class BaseImageCreator(object):
                                        "with '%s' : %s" % (s.interp, msg))
             finally:
                 os.unlink(path)
+
+        if pack_scripts:
+            # recalculate image output
+            self.outimage = [ os.path.join(destdir, f) for f in os.listdir(self.destdir) ]
 
     def print_outimage_info(self):
         msg = "The new image can be found here:\n"

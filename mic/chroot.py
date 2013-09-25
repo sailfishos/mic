@@ -184,7 +184,7 @@ def setup_chrootenv(chrootdir, bindmounts = None):
     return globalmounts
 
 def kill_processes(chrootdir):
-    import glob
+    import glob, time
     for fp in glob.glob("/proc/*/root"):
         try:
             if os.readlink(fp) == chrootdir:
@@ -192,7 +192,9 @@ def kill_processes(chrootdir):
                 msger.debug("Killing %s" % pid)
                 os.kill(pid, 9)
         except Exception, e:
-            msger.warning("Failed to kill %s %s" % (pid, e))
+            msger.warning("Failed to kill %s %s" % (fp, e))
+
+    time.sleep(2)
 
 def cleanup_chrootenv(chrootdir, bindmounts = None, globalmounts = []):
     global chroot_lockfd, chroot_lock
