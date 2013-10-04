@@ -1016,7 +1016,8 @@ class BaseImageCreator(object):
         msger.info("Running post scripts ...")
         if os.path.exists(self._instroot + "/tmp"):
             shutil.rmtree(self._instroot + "/tmp")
-        os.mkdir (self._instroot + "/tmp", 1777)
+        origumask=os.umask(0000)
+        os.mkdir (self._instroot + "/tmp", 0o1777)
         for s in kickstart.get_post_scripts(self.ks):
             (fd, path) = tempfile.mkstemp(prefix = "ks-script-",
                                           dir = self._instroot + "/tmp")
@@ -1058,12 +1059,14 @@ class BaseImageCreator(object):
                                        "with '%s' : %s" % (s.interp, msg))
             finally:
                 os.unlink(path)
+                os.umask(origumask)
 
         kill_processes(self._instroot)
 
     def __run_pre_scripts(self):
         msger.info("Running pre scripts ...")
-        os.mkdir (self._instroot + "/tmp", 1777)
+        origumask=os.umask(0000)
+        os.mkdir (self._instroot + "/tmp", 0o1777)
         for s in kickstart.get_pre_scripts(self.ks):
             (fd, path) = tempfile.mkstemp(prefix = "ks-script-",
                                           dir = self._instroot + "/tmp")
@@ -1100,6 +1103,7 @@ class BaseImageCreator(object):
                                        "with '%s' : %s" % (s.interp, msg))
             finally:
                 os.unlink(path)
+                os.umask(origumask)
 
     def __save_repo_keys(self, repodata):
         if not repodata:
