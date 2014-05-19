@@ -189,6 +189,17 @@ def kill_processes(chrootdir):
         try:
             if os.readlink(fp) == chrootdir:
                 pid = int(fp.split("/")[2])
+                msger.debug("Terminating %s" % pid)
+                os.kill(pid, 15)
+        except Exception, e:
+            msger.warning("Failed to terminate %s %s" % (fp, e))
+
+    time.sleep(5)
+
+    for fp in glob.glob("/proc/*/root"):
+        try:
+            if os.readlink(fp) == chrootdir:
+                pid = int(fp.split("/")[2])
                 msger.debug("Killing %s" % pid)
                 os.kill(pid, 9)
         except Exception, e:
