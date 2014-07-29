@@ -222,7 +222,7 @@ class Zypp(BackendPlugin):
                         reverse=True):
 
             xitem = self._castKind(item)
-            msger.debug("item found %s" % xitem.name())
+            msger.debug("item found %s %s" % (xitem.name(), xitem.edition()))
             if xitem.name() in self.excpkgs.keys() and \
                self.excpkgs[xitem.name()] == xitem.repoInfo().name():
                 continue
@@ -233,7 +233,7 @@ class Zypp(BackendPlugin):
             found = True
             obspkg = self.whatObsolete(xitem.name(), flag, evr)
             if obspkg:
-                msger.debug("selecting %s which obsoletes %s" % (self._castKind(obspkg).name(), xitem.name()))
+                msger.debug("selecting %s %s which obsoletes %s" % (self._castKind(obspkg).name(), self._castKind(obspkg).edition(), xitem.name()))
 
             if arch:
                 if arch == str(xitem.arch()):
@@ -259,7 +259,7 @@ class Zypp(BackendPlugin):
                             reverse=True):
 
                 xitem = self._castKind(item)
-                msger.debug("item found %s" % xitem.name())
+                msger.debug("item found %s %s" % (xitem.name(), xitem.edition()))
                 if xitem.name() in self.excpkgs.keys() and \
                    self.excpkgs[xitem.name()] == xitem.repoInfo().name():
                     continue
@@ -270,7 +270,7 @@ class Zypp(BackendPlugin):
                 found = True
                 obspkg = self.whatObsolete(xitem.name(), flag, evr)
                 if obspkg:
-                    msger.debug("selecting %s which obsoletes %s" % (self._castKind(obspkg).name(), xitem.name()))
+                    msger.debug("selecting %s %s which obsoletes %s" % (self._castKind(obspkg).name(), self._castKind(obspkg).edition(), xitem.name()))
 
                 markPoolItem(obspkg, item)
                 break
