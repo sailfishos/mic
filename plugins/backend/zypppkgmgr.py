@@ -123,16 +123,30 @@ class Zypp(BackendPlugin):
     def setup(self):
         self._cleanupRpmdbLocks(self.instroot)
 
-    def whatObsolete(self, pkg):
+    def whatObsolete(self, pkg, flag, evr):
         query = zypp.PoolQuery()
         query.addKind(zypp.ResKind.package)
         query.addAttribute(zypp.SolvAttr.obsoletes, pkg)
         query.setMatchExact()
-        for pi in query.queryResults(self.Z.pool()):
+        if flag and evr:
+            query.addAttribute(zypp.SolvAttr.edition, flag+evr)
+
+        for pi in sorted(query.queryResults(self.Z.pool()),
+                         cmp=lambda x,y: cmpEVR(self._castKind(x).edition(), self._castKind(y).edition()),
+                         reverse=True):
             return pi
         return None
 
     def _splitPkgString(self, pkg):
+        flags = [">=", "<=", "=", ">", "<"]
+        evr = None
+        f = None
+        for flag in flags:
+          if flag in pkg:
+              f = flag
+              pkg, evr = pkg.rsplit(flag,1)
+              break
+
         sp = pkg.rsplit(".",1)
         name = sp[0]
         arch = None
@@ -142,7 +156,7 @@ class Zypp(BackendPlugin):
             if not zypp.Arch(arch).compatible_with (sysarch):
                 arch = None
                 name = ".".join(sp)
-        return name, arch
+        return name, arch, f, evr
 
     def _castKind(self, poolitem):
         item = None
@@ -172,8 +186,8 @@ class Zypp(BackendPlugin):
         startx = pkg.startswith("*")
         endx = pkg.endswith("*")
         ispattern = startx or endx
-        name, arch = self._splitPkgString(pkg)
-        msger.debug("selectPackage %s %s" % (name, arch))
+        name, arch, flag, evr = self._splitPkgString(pkg)
+        msger.debug("selectPackage %s %s %s %s" % (name, arch, flag, evr))
 
         q = zypp.PoolQuery()
         q.addKind(zypp.ResKind.package)
@@ -192,9 +206,15 @@ class Zypp(BackendPlugin):
             q.setMatchExact()
             q.addAttribute(zypp.SolvAttr.name,name)
 
+        elif flag and evr:
+            q.setMatchExact()
+            q.addAttribute(zypp.SolvAttr.name,name)
+            q.addAttribute(zypp.SolvAttr.edition,flag+evr)
+
         else:
             q.setMatchExact()
             q.addAttribute(zypp.SolvAttr.name,pkg)
+
 
         for item in sorted(
                         q.queryResults(self.Z.pool()),
@@ -211,7 +231,10 @@ class Zypp(BackendPlugin):
                 continue
 
             found = True
-            obspkg = self.whatObsolete(xitem.name())
+            obspkg = self.whatObsolete(xitem.name(), flag, evr)
+            if obspkg:
+                msger.debug("selecting %s which obsoletes %s" % (self._castKind(obspkg).name(), xitem.name()))
+
             if arch:
                 if arch == str(xitem.arch()):
                     item.status().setToBeInstalled (zypp.ResStatus.USER)
@@ -223,27 +246,34 @@ class Zypp(BackendPlugin):
         # Can't match using package name, then search from packge
         # provides infomation
         if found == False and not ispattern:
-            q.addAttribute(zypp.SolvAttr.provides, pkg)
+            msger.debug("package name %s not found searching provides" % name)
+            q.addAttribute(zypp.SolvAttr.provides, name)
             q.addAttribute(zypp.SolvAttr.name,'')
 
-            items = q.queryResults(self.Z.pool())
-            if not items:
-                for item in sorted(items,
-                                   cmp=lambda x,y: cmpEVR(x.edition(), y.edition()),
-                                   reverse=True):
+            if flag and evr:
+                q.addAttribute(zypp.SolvAttr.edition,flag+evr)
 
-                    xitem = self._castKind(item)
-                    if xitem.name() in self.excpkgs.keys() and \
-                       self.excpkgs[xitem.name()] == xitem.repoInfo().name():
-                        continue
-                    if xitem.name() in self.incpkgs.keys() and \
-                       self.incpkgs[xitem.name()] != xitem.repoInfo().name():
-                        continue
+            for item in sorted(
+                            q.queryResults(self.Z.pool()),
+                            cmp=lambda x,y: cmpEVR(self._castKind(x).edition(), self._castKind(y).edition()),
+                            reverse=True):
 
-                    found = True
-                    obspkg = self.whatObsolete(xitem.name())
-                    markPoolItem(obspkg, item)
-                    break
+                xitem = self._castKind(item)
+                msger.debug("item found %s" % xitem.name())
+                if xitem.name() in self.excpkgs.keys() and \
+                   self.excpkgs[xitem.name()] == xitem.repoInfo().name():
+                    continue
+                if xitem.name() in self.incpkgs.keys() and \
+                   self.incpkgs[xitem.name()] != xitem.repoInfo().name():
+                    continue
+
+                found = True
+                obspkg = self.whatObsolete(xitem.name(), flag, evr)
+                if obspkg:
+                    msger.debug("selecting %s which obsoletes %s" % (self._castKind(obspkg).name(), xitem.name()))
+
+                markPoolItem(obspkg, item)
+                break
 
         if found:
             return None
@@ -259,7 +289,7 @@ class Zypp(BackendPlugin):
             startx = pkg.startswith("*")
             endx = pkg.endswith("*")
             ispattern = startx or endx
-            pkgname, pkgarch = self._splitPkgString(pkg)
+            pkgname, pkgarch, flag, evr = self._splitPkgString(pkg)
             if not ispattern:
                 if pkgarch:
                     if name == pkgname and str(item.arch()) == pkgarch:
@@ -285,15 +315,15 @@ class Zypp(BackendPlugin):
 
         todo = zypp.GetResolvablesToInsDel(self.Z.pool())
         installed_pkgs = todo._toInstall
-        groups = set()
+        groups_found = False
         for xitem in installed_pkgs:
             if zypp.isKindPattern(xitem):
                 item = self._castKind(xitem)
                 msger.debug("%s is going to be derefed" % item.name())
-                groups.add(item.name())
                 self.selectGroup(item.name())
+                groups_found = True
 
-        return groups
+        return groups_found
 
     def selectGroup(self, grp, include = ksparser.GROUP_DEFAULT):
         if not self.Z:
@@ -906,8 +936,9 @@ class Zypp(BackendPlugin):
 
         if items:
             items = sorted(items,
-                           cmp=lambda x,y: cmpEVR(x.edition(), y.edition()),
+                           cmp=lambda x,y: cmpEVR(self._castKind(x).edition(), self._castKind(y).edition()),
                            reverse=True)
+
             item = self._castKind(items[0])
             url = self.get_url(item)
             proxies = self.get_proxies(item)
