@@ -475,6 +475,8 @@ def _get_metadata_from_repo(baseurl, proxies, cachedir, reponame, filename,
         file_checksum = runner.outs([sumcmd, filename]).split()[0]
         if file_checksum == checksum:
             return filename
+        else:
+            os.unlink(filename)
     return _get_uncompressed_data_from_url(url,filename_tmp,proxies)
 
 def get_metadata_from_repos(repos, cachedir):
@@ -482,7 +484,6 @@ def get_metadata_from_repos(repos, cachedir):
     for repo in repos:
         reponame = repo['name']
         baseurl  = repo['baseurl']
-
 
         if 'proxy' in repo:
             proxy = repo['proxy']

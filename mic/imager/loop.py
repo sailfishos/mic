@@ -328,7 +328,7 @@ class LoopImageCreator(BaseImageCreator):
                'fsopts': "defaults,noatime" if not p['fsopts'] else p['fsopts']}
 
             if p['mountpoint'] == "/":
-                for subvol in p['subvolumes']:
+                for subvol in p.get('subvolumes', []):
                     if subvol['mountpoint'] == "/":
                         continue
                     s += "%(device)s  %(mountpoint)s  %(fstype)s  %(fsopts)s 0 0\n" % {

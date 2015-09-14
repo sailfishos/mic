@@ -993,12 +993,11 @@ class BaseImageCreator(object):
                 self._pkgs_content = pkg_manager.getAllContent()
                 self._pkgs_urls = pkg_manager.getAllUrls()
                 self._pkgs_license = pkg_manager.getPkgsLicense()
+                # hook post install
+                self.postinstall()
                 self.__attachment_packages(pkg_manager)
         finally:
             pkg_manager.close()
-
-        # hook post install
-        self.postinstall()
 
         # do some clean up to avoid lvm info leakage.  this sucks.
         for subdir in ("cache", "backup", "archive"):
