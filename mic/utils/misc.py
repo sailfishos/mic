@@ -839,6 +839,9 @@ def setup_qemu_emulator(rootdir, arch):
     if arch.startswith("arm"):
         qemu_emulator = "/usr/bin/qemu-arm"
         qemu_arch = "arm"
+    elif arch == "aarch64":
+        qemu_emulator = "/usr/bin/qemu-aarch64"
+        qemu_arch = "aarch64"
     elif arch == "mipsel":
         qemu_emulator = "/usr/bin/qemu-mipsel"
         qemu_arch = "mipsel"
@@ -879,10 +882,13 @@ def setup_qemu_emulator(rootdir, arch):
     # register qemu emulator for interpreting other arch executable file
     if not os.path.exists(node):
         qemu_arm_string = ":arm:M::\\x7fELF\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\x28\\x00:\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\x00\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xfa\\xff\\xff\\xff:%s:\n" % qemu_emulator
+        qemu_aarch64_string = ":aarch64:M::\\x7fELF\\x02\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\xb7:\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\x00\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xfe\\xff\\xff:%s:\n" % qemu_emulator        
         qemu_mipsel_string = ":mipsel:M::\\x7fELF\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\x08\\x00:\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\x00\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xfe\\xff\\xff\\xff:%s:\n" % qemu_emulator
         binfmt_register = "/proc/sys/fs/binfmt_misc/register"
         if qemu_arch == "arm":
             qemu_register_string = qemu_arm_string
+        elif qemu_arch == "aarch64":
+            qemu_register_string = qemu_aarch64_string
         elif qemu_arch == "mipsel":
             qemu_register_string = qemu_mipsel_string
         fd = open(binfmt_register, "w")
