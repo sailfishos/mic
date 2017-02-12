@@ -1037,9 +1037,9 @@ class BaseImageCreator(object):
                 preexec = None
                 script = path
             else:
-                if os.path.exists(self._instroot + "/etc/resolv.conf"):
+                if os.path.lexists(self._instroot + "/etc/resolv.conf"):
                     # replace resolv.conf to get DNS in chroot
-                    shutil.copy(self._instroot + "/etc/resolv.conf", self._instroot + "/etc/resolv.conf.bak")
+                    shutil.move(self._instroot + "/etc/resolv.conf", self._instroot + "/etc/resolv.conf.bak")
                 shutil.copy("/etc/resolv.conf", self._instroot + "/etc/resolv.conf")
 
                 preexec = self._chroot
@@ -1066,9 +1066,8 @@ class BaseImageCreator(object):
                 os.unlink(path)
                 if s.inChroot:
                     # revert resolv.conf
-                    if os.path.exists(self._instroot + "/etc/resolv.conf.bak"):
-                        shutil.copy(self._instroot + "/etc/resolv.conf.bak", self._instroot + "/etc/resolv.conf")
-                        os.unlink(self._instroot + "/etc/resolv.conf.bak")
+                    if os.path.lexists(self._instroot + "/etc/resolv.conf.bak"):
+                        shutil.move(self._instroot + "/etc/resolv.conf.bak", self._instroot + "/etc/resolv.conf")
                     else:
                         os.unlink(self._instroot + "/etc/resolv.conf")
 
