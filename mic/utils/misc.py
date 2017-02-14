@@ -453,11 +453,13 @@ def _get_uncompressed_data_from_url(url, filename, proxies):
     if filename.endswith(".gz"):
         suffix = ".gz"
         runner.quiet(['gunzip', "-f", filename])
+        msger.info("filename %s gunzipped" % filename)
     elif filename.endswith(".bz2"):
         suffix = ".bz2"
         runner.quiet(['bunzip2', "-f", filename])
     if suffix:
         filename = filename.replace(suffix, "")
+        msger.info("filename is now %s" % filename)
     return filename
 
 def _get_metadata_from_repo(baseurl, proxies, cachedir, reponame, filename,
@@ -474,8 +476,10 @@ def _get_metadata_from_repo(baseurl, proxies, cachedir, reponame, filename,
         sumcmd = "%ssum" % sumtype
         file_checksum = runner.outs([sumcmd, filename]).split()[0]
         if file_checksum == checksum:
+            msger.info("%s checksum %s matches cache" % (filename, file_checksum))
             return filename
         else:
+            msger.info("%s checksum %s does not match cache, removing it" % (filename, file_checksum))
             os.unlink(filename)
     return _get_uncompressed_data_from_url(url,filename_tmp,proxies)
 
