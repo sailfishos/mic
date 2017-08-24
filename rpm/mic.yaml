@@ -26,14 +26,11 @@ Requires:
     - python >= 2.5
     - e2fsprogs
     - dosfstools >= 2.11-8
-    - yum >= 3.2.24
     - syslinux >= 3.82
     - kpartx
     - parted
     - device-mapper
-    - /usr/bin/genisoimage
     - cpio
-    - isomd5sum
     - gzip
     - bzip2
     - python-urlgrabber
@@ -44,3 +41,25 @@ Requires:
     - psmisc
 PkgBR:
     - python-devel
+
+SubPackages:
+    - Name:  livecd
+      Summary: "%{summary} - livecd imager plugin"
+      Group: System/Base
+      Requires:
+          - "%{name} = %{version}"
+          - /usr/bin/genisoimage
+          - isomd5sum
+
+    - Name:  liveusb
+      Summary: "%{summary} - liveusb imager plugin"
+      Group: System/Base
+      Requires:
+          - "%{name}-livecd = %{version}"
+
+    - Name:  yum
+      Summary: "%{summary} - yum backend plugin"
+      Group: System/Base
+      Requires:
+          - "%{name} = %{version}"
+          - yum >= 3.2.24
