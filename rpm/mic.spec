@@ -40,7 +40,7 @@ an image.
 
 
 %package livecd
-Summary:    %{summary} - livecd imager plugin
+Summary:    %{name} - livecd imager plugin
 Group:      System/Base
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name} = %{version}
@@ -51,7 +51,7 @@ Requires:   isomd5sum
 %{summary}.
 
 %package liveusb
-Summary:    %{summary} - liveusb imager plugin
+Summary:    %{name} - liveusb imager plugin
 Group:      System/Base
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name}-livecd = %{version}
@@ -60,7 +60,7 @@ Requires:   %{name}-livecd = %{version}
 %{summary}.
 
 %package yum
-Summary:    %{summary} - yum backend plugin
+Summary:    %{name} - yum backend plugin
 Group:      System/Base
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name} = %{version}
