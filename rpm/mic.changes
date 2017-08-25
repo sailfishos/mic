@@ -1,35 +1,35 @@
 * Tue Apr 2 2013 Islam Amer <islam.amer@jollamobile.com> - 0.14-mer7
- - Add support for %pre scripts
- - Honor --erroronfail for scripts
+- Add support for %pre scripts
+- Honor --erroronfail for scripts
 
 * Fri Mar 22 2013 Islam Amer <islam.amer@jollamobile.com> - 0.14-mer6
- - Workaround delayed IO keeping loop devices busy
- - Fix issue with proxy set
- - Fix vfat UUID missing a -
- - Fix /tmp permission
- - use bash as %post script interpreter
- - kill remaining processes after %post 
- - Preserve sparseness of files on packing
- - Generate full /etc/fstab for loop images
- - Dereference patterns recursively
- - Version sort and select newest patterns
- - log useful info about which patterns were selected
+- Workaround delayed IO keeping loop devices busy
+- Fix issue with proxy set
+- Fix vfat UUID missing a -
+- Fix /tmp permission
+- use bash as %post script interpreter
+- kill remaining processes after %post
+- Preserve sparseness of files on packing
+- Generate full /etc/fstab for loop images
+- Dereference patterns recursively
+- Version sort and select newest patterns
+- log useful info about which patterns were selected
 
 * Sun Dec 9 2012 Islam Amer <islam.amer@jollamobile.com> - 0.14-mer1
- - New upstream 0.14
- - Rebased Mer patches
- - Fix zypper backend
- - Add new recoding file .urls which contains urls of packages used in the image
- - Extract uImage files from /boot when using --copy-kernel
- - Refactor common creator options and add token map feature
- - Fixup for usage with ~/.netrc enabled urlgrabber and zypper
- - Workaround for repos with broken repomd.xml files
+- New upstream 0.14
+- Rebased Mer patches
+- Fix zypper backend
+- Add new recoding file .urls which contains urls of packages used in the image
+- Extract uImage files from /boot when using --copy-kernel
+- Refactor common creator options and add token map feature
+- Fixup for usage with ~/.netrc enabled urlgrabber and zypper
+- Workaround for repos with broken repomd.xml files
 
 * Mon Jul 30 2012 David Greaves <david@dgreaves.com> - 0.13-mer1
- - New upstream 0.13
- - Rebased patches
- - Added Amir Hassan's mtab fix for MER#489
- - mtab Resolves MER#218, 
+- New upstream 0.13
+- Rebased patches
+- Added Amir Hassan's mtab fix for MER#489
+- mtab Resolves MER#218,
 
 * Tue Apr 17 2012 David Greaves <david@dgreaves.com> - 0.8.acf9b1
 - Snapshot of 0.8 with Mer patches
@@ -51,7 +51,7 @@
   - Fix NoneType 'createopts' when convert
   - Fix no existed local_pkgs_path
  
-* Mon Dec 26 2011 Zhang Qiang<qiang.z.zhang@intel.com> - 0.3
+* Mon Dec 26 2011 Zhang Qiang <qiang.z.zhang@intel.com> - 0.3
 - Upgrade to version 0.3, changes including:
   - Unit test support, run 'make test'
   - Enable proxy support in config file
