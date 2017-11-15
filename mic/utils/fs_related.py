@@ -854,7 +854,9 @@ class BtrfsDiskMount(DiskMount):
             return
 
         msger.verbose("Formating %s filesystem on %s" % (self.fstype, self.disk.device))
-        rc = runner.show([self.mkfscmd, "-L", self.fslabel, self.disk.device])
+        # For now hardcode the 'no extref' option
+        msger.verbose("Hardcode in /usr/lib/python2.7/site-packages/mic/utils/fs_related.py for the 'no extref' option (-O ^extref). See JB#39420")
+        rc = runner.show([self.mkfscmd, "-O", "^extref", "-L", self.fslabel, self.disk.device])
         if rc != 0:
             raise MountError("Error creating %s filesystem on disk %s" % (self.fstype,self.disk.device))
 
