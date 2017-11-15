@@ -890,8 +890,10 @@ class BaseImageCreator(object):
         self._attachment = []
         for item in kickstart.get_attachment(self.ks):
             if item.startswith('/'):
-                fpaths = os.path.join(self._instroot, item.lstrip('/'))
-                for fpath in glob.glob(fpaths):
+                fpaths = glob.glob(os.path.join(self._instroot, item.lstrip('/')))
+                if not fpaths:
+                    msger.warning("No file matching attachment '%s'" % item)
+                for fpath in fpaths:
                     self._attachment.append(fpath)
                 continue
 
