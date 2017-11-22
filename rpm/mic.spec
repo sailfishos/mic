@@ -25,6 +25,7 @@ Requires:   bzip2
 Requires:   python-urlgrabber
 Requires:   squashfs-tools >= 4.0
 Requires:   btrfs-progs
+Requires:   python-distro
 Requires:   python-m2crypto
 Requires:   python-zypp >= 0.5.9.1
 Requires:   psmisc

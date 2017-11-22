@@ -26,7 +26,7 @@ import shutil
 import glob
 import hashlib
 import subprocess
-import platform
+import distro
 import rpmmisc
 
 try:
@@ -57,36 +57,10 @@ RPM_RE  = re.compile("(.*)\.(.*) (.*)-(.*)")
 RPM_FMT = "%(name)s.%(arch)s %(ver_rel)s"
 SRPM_RE = re.compile("(.*)-(\d+.*)-(\d+\.\d+).src.rpm")
 
-def get_distro():
-    """Detect linux distribution, support "meego"
-    """
-
-    support_dists = ('SuSE',
-                     'debian',
-                     'fedora',
-                     'redhat',
-                     'centos',
-                     'meego',
-                     'moblin',
-                     'tizen')
-    try:
-        (dist, ver, id) = platform.linux_distribution( \
-                              supported_dists = support_dists)
-    except:
-        (dist, ver, id) = platform.dist( \
-                              supported_dists = support_dists)
-
-    return (dist, ver, id)
-
 def get_distro_str():
     """Get composited string for current linux distribution
     """
-    (dist, ver, id) = get_distro()
-
-    if not dist:
-        return 'Unknown Linux Distro'
-    else:
-        return ' '.join(map(str.strip, (dist, ver, id)))
+    return distro.name(pretty=True) or 'Unknown Linux Distro'
 
 _LOOP_RULE_PTH = "/etc/udev/rules.d/80-prevent-loop-present.rules"
 def hide_loopdev_presentation():

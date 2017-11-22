@@ -19,6 +19,7 @@ import os, sys
 import string
 import shutil
 import re
+import distro
 
 from mic import bootstrap
 from mic import msger
@@ -30,7 +31,7 @@ from mic.utils.proxy import get_proxy_for
 BOOTSTRAP_URL="http://download.tizen.org/tools/micbootstrap"
 
 def runmic_in_runtime(runmode, opts, ksfile, argv=None):
-    dist = misc.get_distro()[0]
+    dist = distro.name()
     if not runmode or not dist or "MeeGo" == dist:
         return
 
