@@ -134,6 +134,7 @@ class Yum(BackendPlugin, yum.YumBase):
         self.closeRpmDB()
 
         if not os.path.exists("/etc/fedora-release") and \
+           not os.path.exists("/etc/sailfish-release") and \
            not os.path.exists("/etc/meego-release"):
             for i in range(3, os.sysconf("SC_OPEN_MAX")):
                 try:

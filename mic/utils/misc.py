@@ -248,8 +248,9 @@ def normalize_ksfile(ksconf, tokenmap):
 def _check_meego_chroot(rootdir):
     if not os.path.exists(rootdir + "/etc/moblin-release") and \
        not os.path.exists(rootdir + "/etc/meego-release") and \
+       not os.path.exists(rootdir + "/etc/sailfish-release") and \
        not os.path.exists(rootdir + "/etc/tizen-release"):
-        raise CreatorError("Directory %s is not a MeeGo/Tizen chroot env"\
+        raise CreatorError("Directory %s is not a supported chroot env"\
                            % rootdir)
 
     if not glob.glob(rootdir + "/boot/vmlinuz-*"):
