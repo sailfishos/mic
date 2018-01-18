@@ -22,12 +22,14 @@ Requires:   device-mapper
 Requires:   cpio
 Requires:   gzip
 Requires:   bzip2
+Requires:   zip
 Requires:   python-urlgrabber
 Requires:   squashfs-tools >= 4.0
 Requires:   btrfs-progs
 Requires:   python-distro
 Requires:   python-m2crypto
 Requires:   python-zypp >= 0.5.9.1
+Requires:   rpm-python
 Requires:   psmisc
 BuildRequires:  python-devel
 BuildRoot:  %{_tmppath}/%{name}-%{version}-build
