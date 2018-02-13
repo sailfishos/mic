@@ -314,7 +314,7 @@ class SparseLoopbackDisk(LoopbackDisk):
         else:
             fd = os.open(self.lofile, flags)
 
-        os.lseek(fd, size, os.SEEK_SET)
+        os.lseek(fd, size - 1, os.SEEK_SET)
         os.write(fd, '\x00')
         os.close(fd)
 
