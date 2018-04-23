@@ -442,6 +442,7 @@ class ExtDiskMount(DiskMount):
         rc = runner.show([self.mkfscmd,
                           "-F", "-L", self.fslabel,
                           "-m", "1", "-b", str(self.blocksize),
+                          "-O", "^64bit", # syslinux does not support 64bit filesystems
                           self.disk.device]) # str(self.disk.size / self.blocksize)])
         if rc != 0:
             raise MountError("Error creating %s filesystem on disk %s" % (self.fstype, self.disk.device))
