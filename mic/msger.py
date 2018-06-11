@@ -93,6 +93,7 @@ def _general_print(head, color, msg = None, stream = None, level = 'normal'):
         timestr = time.strftime("[%m/%d %H:%M:%S] ",
                                 time.gmtime(time.time() - HOST_TIMEZONE))
         LOG_CONTENT += timestr + save_msg + '\n'
+        head += timestr
 
     if errormsg:
         _color_print('', NO_COLOR, errormsg, stream, level)
