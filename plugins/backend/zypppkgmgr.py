@@ -401,7 +401,7 @@ class Zypp(BackendPlugin):
             repo.mirrorlist = mirrorlist
 
         # Enable gpg check for verifying corrupt packages
-        repo.gpgcheck = 1
+        repo.gpgcheck = 0
         if priority:
             repo.priority = priority
 
@@ -410,6 +410,7 @@ class Zypp(BackendPlugin):
             repo_info.setAlias(repo.name)
             repo_info.setName(repo.name)
             repo_info.setEnabled(repo.enabled)
+            repo_info.setGpgCheck(repo.gpgcheck)
             repo_info.setAutorefresh(repo.autorefresh)
             repo_info.setKeepPackages(repo.keeppackages)
             baseurl = zypp.Url(repo.baseurl[0])
