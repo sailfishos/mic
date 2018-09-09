@@ -23,11 +23,6 @@ import urlparse
 import rpm
 
 import zypp
-if not hasattr(zypp, 'PoolQuery') or \
-   not hasattr(zypp.RepoManager, 'loadSolvFile'):
-    raise ImportError("python-zypp in host system cannot support PoolQuery or "
-                      "loadSolvFile interface, please update it to enhanced "
-                      "version which can be found in repo.meego.com/tools")
 
 from mic import msger
 from mic.kickstart import ksparser
@@ -676,7 +671,7 @@ class Zypp(BackendPlugin):
             f.write(out)
             f.close()
 
-            warnmsg = self.repo_manager.loadSolvFile(solvfile,
+            warnmsg = self.Z.pool().loadRepoSolv(_solv, tmpRepo);(solvfile,
                                                      os.path.basename(pkg))
             if warnmsg:
                 msger.warning(warnmsg)
