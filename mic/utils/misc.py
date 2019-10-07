@@ -36,11 +36,6 @@ except ImportError:
     from md5 import md5
 
 try:
-    import sqlite3 as sqlite
-except ImportError:
-    import sqlite
-
-try:
     from xml.etree import cElementTree
 except ImportError:
     import cElementTree
@@ -571,14 +566,6 @@ def get_rpmver_in_repo(repometadata):
                         if node.tag == "%sversion" % ns:
                             versionlist.append(node.attrib['ver'])
 
-        elif repo["primary"].endswith(".sqlite"):
-            con = sqlite.connect(repo["primary"])
-            versionlist = [
-                row[0] for row in
-                con.execute('select version from packages where name="rpm"')
-            ]
-            con.close()
-
     if versionlist:
         versionlist.sort(
             reverse=True,
@@ -602,13 +589,6 @@ def get_arch(repometadata):
                     arch = elm.find("%sarch" % ns).text
                     if arch not in archlist:
                         archlist.append(arch)
-        elif repo["primary"].endswith(".sqlite"):
-            con = sqlite.connect(repo["primary"])
-            for row in con.execute("select arch from packages where arch not in (\"src\", \"noarch\")"):
-                if row[0] not in archlist:
-                    archlist.append(row[0])
-
-            con.close()
 
     uniq_arch = []
     for i in range(len(archlist)):
@@ -652,23 +632,6 @@ def get_package(pkg, repometadata, arch = None):
                             pkgpath = "%s" % location.attrib['href']
                             target_repo = repo
                         break
-        if repo["primary"].endswith(".sqlite"):
-            con = sqlite.connect(repo["primary"])
-            if not arch:
-                for row in con.execute("select version, release,location_href from packages where name = \"%s\" and arch != \"src\"" % pkg):
-                    tmpver = "%s-%s" % (row[0], row[1])
-                    if tmpver > ver:
-                        pkgpath = "%s" % row[2]
-                        target_repo = repo
-                    break
-            else:
-                for row in con.execute("select version, release,location_href from packages where name = \"%s\"" % pkg):
-                    tmpver = "%s-%s" % (row[0], row[1])
-                    if tmpver > ver:
-                        pkgpath = "%s" % row[2]
-                        target_repo = repo
-                    break
-            con.close()
     if target_repo:
         makedirs("%s/%s/packages" % (target_repo["cachedir"], target_repo["name"]))
         url = os.path.join(target_repo["baseurl"], pkgpath)
@@ -719,15 +682,6 @@ def get_source_name(pkg, repometadata):
                                 target_repo = repo
                         break
 
-        if repo["primary"].endswith(".sqlite"):
-            con = sqlite.connect(repo["primary"])
-            for row in con.execute("select version, release, rpm_sourcerpm from packages where name = \"%s\" and arch != \"src\"" % pkg_name):
-                tmpver = "%s-%s" % (row[0], row[1])
-                if tmpver > ver:
-                    pkgpath = "%s" % row[2]
-                    target_repo = repo
-                break
-            con.close()
     if target_repo:
         return get_src_name(pkgpath)
     else:
