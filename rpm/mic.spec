@@ -23,6 +23,7 @@ Requires:   cpio
 Requires:   gzip
 Requires:   bzip2
 Requires:   zip
+Requires:   gnu-tar
 Requires:   python-urlgrabber
 Requires:   squashfs-tools >= 4.0
 Requires:   btrfs-progs
