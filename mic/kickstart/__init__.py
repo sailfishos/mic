@@ -398,7 +398,7 @@ class RootPasswordConfig(KickstartConfig):
         elif ksrootpw.password != "":
             self.set_unencrypted(ksrootpw.password)
         else:
-            self.unset()
+            self.set_encrypted("!")
 
 class UserConfig(KickstartConfig):
     def set_empty_passwd(self, user):
