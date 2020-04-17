@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Marko Saukko <marko.saukko@cybercom.com>
 #

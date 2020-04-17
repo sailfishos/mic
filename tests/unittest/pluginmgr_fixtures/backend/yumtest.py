@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 
 from mic.pluginbase import BackendPlugin
 class Yum(BackendPlugin):

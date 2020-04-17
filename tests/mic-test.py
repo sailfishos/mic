@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import unittest
 import os, sys, glob, tempfile, shutil
 from testbase import *
