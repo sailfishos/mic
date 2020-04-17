@@ -48,10 +48,6 @@ PACKAGES = [MOD_NAME,
             MOD_NAME + '/imager',
             MOD_NAME + '/kickstart',
             MOD_NAME + '/kickstart/custom_commands',
-            MOD_NAME + '/3rdparty/pykickstart',
-            MOD_NAME + '/3rdparty/pykickstart/commands',
-            MOD_NAME + '/3rdparty/pykickstart/handlers',
-            MOD_NAME + '/3rdparty/pykickstart/urlgrabber',
            ]
 
 IMAGER_PLUGINS = glob.glob(os.path.join("plugins", "imager", "*.py"))
