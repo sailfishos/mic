@@ -61,7 +61,7 @@ def RunandCheck(object, work_env):
     else:
         args = mic_cmd+' test.ks'
 
-    print args
+    print(args)
     log = open('miclog','w')
     proc = subprocess.Popen(args,stdout = log ,stderr=subprocess.PIPE,shell=True)
     errorinfo = proc.communicate()[1]

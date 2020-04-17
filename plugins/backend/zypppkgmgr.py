@@ -19,7 +19,7 @@
 
 import os
 import shutil
-import urlparse
+import urllib.parse
 import rpm
 
 import zypp
@@ -32,8 +32,8 @@ from mic.utils.errors import CreatorError, RepoError, RpmError
 from mic.imager.baseimager import BaseImageCreator
 
 def cmpEVR(ed1, ed2):
-    (e1, v1, r1) = map(str, [ed1.epoch(), ed1.version(), ed1.release()])
-    (e2, v2, r2) = map(str, [ed2.epoch(), ed2.version(), ed2.release()])
+    (e1, v1, r1) = list(map(str, [ed1.epoch(), ed1.version(), ed1.release()]))
+    (e2, v2, r2) = list(map(str, [ed2.epoch(), ed2.version(), ed2.release()]))
     return rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
 
 class RepositoryStub:
@@ -219,10 +219,10 @@ class Zypp(BackendPlugin):
 
             xitem = self._castKind(item)
             msger.debug("item found %s %s" % (xitem.name(), xitem.edition()))
-            if xitem.name() in self.excpkgs.keys() and \
+            if xitem.name() in list(self.excpkgs.keys()) and \
                self.excpkgs[xitem.name()] == xitem.repoInfo().name():
                 continue
-            if xitem.name() in self.incpkgs.keys() and \
+            if xitem.name() in list(self.incpkgs.keys()) and \
                self.incpkgs[xitem.name()] != xitem.repoInfo().name():
                 continue
 
@@ -256,10 +256,10 @@ class Zypp(BackendPlugin):
 
                 xitem = self._castKind(item)
                 msger.debug("item found %s %s" % (xitem.name(), xitem.edition()))
-                if xitem.name() in self.excpkgs.keys() and \
+                if xitem.name() in list(self.excpkgs.keys()) and \
                    self.excpkgs[xitem.name()] == xitem.repoInfo().name():
                     continue
-                if xitem.name() in self.incpkgs.keys() and \
+                if xitem.name() in list(self.incpkgs.keys()) and \
                    self.incpkgs[xitem.name()] != xitem.repoInfo().name():
                     continue
 
@@ -345,9 +345,9 @@ class Zypp(BackendPlugin):
 
         if found:
             if include == ksparser.GROUP_REQUIRED:
-                map(
+                list(map(
                     lambda p: self.deselectPackage(p),
-                    grp.default_packages.keys())
+                    list(grp.default_packages.keys())))
 
             return None
         else:
@@ -412,7 +412,7 @@ class Zypp(BackendPlugin):
             if not ssl_verify:
                 baseurl.setQueryParam("ssl_verify", "no")
             if proxy:
-                scheme, host, path, parm, query, frag = urlparse.urlparse(proxy)
+                scheme, host, path, parm, query, frag = urllib.parse.urlparse(proxy)
 
                 proxyinfo = host.split(":")
                 host = proxyinfo[0]
@@ -440,7 +440,7 @@ class Zypp(BackendPlugin):
 
             self.__build_repo_cache(name)
 
-        except RuntimeError, e:
+        except RuntimeError as e:
             raise CreatorError(str(e))
 
         msger.verbose('repo: %s was added' % name)
@@ -468,7 +468,7 @@ class Zypp(BackendPlugin):
                     msger.debug("%s is going to be installed" % item.name())
 
         # record all pkg and the content
-        localpkgs = self.localpkgs.keys()
+        localpkgs = list(self.localpkgs.keys())
         for package in dlpkgs:
             license = ''
             if package.name() in localpkgs:
@@ -493,15 +493,15 @@ class Zypp(BackendPlugin):
             self.__pkgs_content[pkg_long_name] = {} #TBD: to get file list
             self.__pkgs_urls[pkg_long_name] = self.get_url(package)
 
-            if license in self.__pkgs_license.keys():
+            if license in list(self.__pkgs_license.keys()):
                 self.__pkgs_license[license].append(pkg_long_name)
             else:
                 self.__pkgs_license[license] = [pkg_long_name]
 
         total_count = len(dlpkgs)
         cached_count = 0
-        download_total_size = sum(map(lambda x: int(x.downloadSize()), dlpkgs))
-        localpkgs = self.localpkgs.keys()
+        download_total_size = sum([int(x.downloadSize()) for x in dlpkgs])
+        localpkgs = list(self.localpkgs.keys())
 
         msger.info("Checking packages cache and packages integrity ...")
         for po in dlpkgs:
@@ -521,7 +521,7 @@ class Zypp(BackendPlugin):
             raise CreatorError("No enough space used for downloading.")
 
         # record the total size of installed pkgs
-        install_total_size = sum(map(lambda x: int(x.installSize()), dlpkgs))
+        install_total_size = sum([int(x.installSize()) for x in dlpkgs])
         # check needed size before actually download and install
 
         # FIXME: for multiple partitions for loop type, check fails
@@ -545,7 +545,7 @@ class Zypp(BackendPlugin):
 
         except (RepoError, RpmError):
             raise
-        except Exception, e:
+        except Exception as e:
             raise CreatorError("Package installation failed: %s" % (e,))
 
     def getAllContent(self):
@@ -696,7 +696,7 @@ class Zypp(BackendPlugin):
                           % (pkg, hdr['arch']))
 
     def downloadPkgs(self, package_objects, count):
-        localpkgs = self.localpkgs.keys()
+        localpkgs = list(self.localpkgs.keys())
         progress_obj = rpmmisc.TextProgress(count)
 
         for po in package_objects:
@@ -763,7 +763,7 @@ class Zypp(BackendPlugin):
         self.ts.setProbFilter(probfilter)
         self.ts_pre.setProbFilter(probfilter)
 
-        localpkgs = self.localpkgs.keys()
+        localpkgs = list(self.localpkgs.keys())
 
         for po in package_objects:
             pkgname = po.name()
@@ -885,7 +885,7 @@ class Zypp(BackendPlugin):
         proxies = None
         repoinfo = pobj.repoInfo()
         reponame = "%s" % repoinfo.name()
-        repos = filter(lambda r: r.name == reponame, self.repos)
+        repos = [r for r in self.repos if r.name == reponame]
         repourl = str(repoinfo.baseUrls()[0])
 
         if repos:
@@ -903,7 +903,7 @@ class Zypp(BackendPlugin):
 
         name = str(pobj.repoInfo().name())
         try:
-            repo = filter(lambda r: r.name == name, self.repos)[0]
+            repo = [r for r in self.repos if r.name == name][0]
         except IndexError:
             return None
 

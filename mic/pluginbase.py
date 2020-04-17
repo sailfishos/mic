@@ -35,7 +35,7 @@ class _Plugin(object):
 
         def show_plugins(cls):
             for cls in cls.plugins[cls.mic_plugin_type]:
-                print cls
+                print(cls)
 
         def get_plugins(cls):
             return cls.plugins

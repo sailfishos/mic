@@ -16,10 +16,10 @@
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import os, sys, re
-import ConfigParser
+import configparser
 
-import msger
-import kickstart
+from . import msger
+from . import kickstart
 from .utils import misc, runner, proxy, errors
 
 DEFAULT_GSITECONF = '/etc/mic/mic.conf'
@@ -99,14 +99,14 @@ class ConfigMgr(object):
         self.__siteconf = None
 
         # initialize the values with defaults
-        for sec, vals in self.DEFAULTS.iteritems():
+        for sec, vals in self.DEFAULTS.items():
             setattr(self, sec, vals)
 
     def __set_siteconf(self, siteconf):
         try:
             self.__siteconf = siteconf
             self._parse_siteconf(siteconf)
-        except ConfigParser.Error, error:
+        except configparser.Error as error:
             raise errors.ConfigError("%s" % error)
     def __get_siteconf(self):
         return self.__siteconf
@@ -130,7 +130,7 @@ class ConfigMgr(object):
             msger.warning("cannot read config file: %s" % siteconf)
             return
 
-        parser = ConfigParser.SafeConfigParser()
+        parser = configparser.SafeConfigParser()
         parser.read(siteconf)
 
         for section in parser.sections():
@@ -138,7 +138,7 @@ class ConfigMgr(object):
                 getattr(self, section).update(dict(parser.items(section)))
 
         # append common section items to other sections
-        for section in self.DEFAULTS.keys():
+        for section in list(self.DEFAULTS.keys()):
             if section != "common" and not section.startswith('bootstrap'):
                 getattr(self, section).update(self.common)
 
@@ -168,14 +168,14 @@ class ConfigMgr(object):
                     val = parser.get(section, option)
                     if '_' in option:
                         (reponame, repoopt) = option.split('_')
-                        if repostr.has_key(reponame):
+                        if reponame in repostr:
                             repostr[reponame] += "%s:%s," % (repoopt, val)
                         else:
                             repostr[reponame] = "%s:%s," % (repoopt, val)
                         continue
 
                     if val.split(':')[0] in ('file', 'http', 'https', 'ftp'):
-                        if repostr.has_key(option):
+                        if option in repostr:
                             repostr[option] += "name:%s,baseurl:%s," % \
                                                 (option, val)
                         else:

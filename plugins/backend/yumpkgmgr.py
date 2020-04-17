@@ -103,7 +103,7 @@ class Yum(BackendPlugin, yum.YumBase):
         self.target_arch = target_arch
 
         if self.target_arch:
-            if not rpmUtils.arch.arches.has_key(self.target_arch):
+            if self.target_arch not in rpmUtils.arch.arches:
                 rpmUtils.arch.arches["armv7hl"] = "noarch"
                 rpmUtils.arch.arches["armv7tnhl"] = "armv7nhl"
                 rpmUtils.arch.arches["armv7tnhl"] = "armv7thl"
@@ -152,7 +152,7 @@ class Yum(BackendPlugin, yum.YumBase):
         f.write(conf)
         f.close()
 
-        os.chmod(confpath, 0644)
+        os.chmod(confpath, 0o644)
 
     def _cleanupRpmdbLocks(self, installroot):
         # cleans up temporary files left by bdb so that differing
@@ -189,9 +189,9 @@ class Yum(BackendPlugin, yum.YumBase):
             return None
         except yum.Errors.InstallError:
             return "No package(s) available to install"
-        except yum.Errors.RepoError, e:
+        except yum.Errors.RepoError as e:
             raise CreatorError("Unable to download from repo : %s" % (e,))
-        except yum.Errors.YumBaseError, e:
+        except yum.Errors.YumBaseError as e:
             raise CreatorError("Unable to install: %s" % (e,))
 
     def deselectPackage(self, pkg):
@@ -217,7 +217,7 @@ class Yum(BackendPlugin, yum.YumBase):
                 # we also need to remove from the conditionals
                 # dict so that things don't get pulled back in as a result
                 # of them.  yes, this is ugly.  conditionals should die.
-                for req, pkgs in self.tsInfo.conditionals.iteritems():
+                for req, pkgs in self.tsInfo.conditionals.items():
                     if x in pkgs:
                         pkgs.remove(x)
                         self.tsInfo.conditionals[req] = pkgs
@@ -228,19 +228,19 @@ class Yum(BackendPlugin, yum.YumBase):
         try:
             yum.YumBase.selectGroup(self, grp)
             if include == ksparser.GROUP_REQUIRED:
-                for p in grp.default_packages.keys():
+                for p in list(grp.default_packages.keys()):
                     self.deselectPackage(p)
 
             elif include == ksparser.GROUP_ALL:
-                for p in grp.optional_packages.keys():
+                for p in list(grp.optional_packages.keys()):
                     self.selectPackage(p)
 
             return None
-        except (yum.Errors.InstallError, yum.Errors.GroupsError), e:
+        except (yum.Errors.InstallError, yum.Errors.GroupsError) as e:
             return e
-        except yum.Errors.RepoError, e:
+        except yum.Errors.RepoError as e:
             raise CreatorError("Unable to download from repo : %s" % (e,))
-        except yum.Errors.YumBaseError, e:
+        except yum.Errors.YumBaseError as e:
             raise CreatorError("Unable to install: %s" % (e,))
 
     def addRepository(self, name, url = None, mirrorlist = None, proxy = None,
@@ -273,7 +273,7 @@ class Yum(BackendPlugin, yum.YumBase):
             repo.mirrorlist = _varSubstitute(mirrorlist)
 
         conf = yum.config.RepoConf()
-        for k, v in conf.iteritems():
+        for k, v in conf.items():
             if v or not hasattr(repo, k):
                 repo.setAttribute(k, v)
 
@@ -298,20 +298,15 @@ class Yum(BackendPlugin, yum.YumBase):
         ts = rpmUtils.transaction.initReadOnlyTransaction()
         try:
             hdr = rpmUtils.miscutils.hdrFromPackage(ts, pkg)
-        except rpmUtils.RpmUtilsError, e:
-            raise yum.Errors.MiscError, \
-                  'Could not open local rpm file: %s: %s' % (pkg, e)
+        except rpmUtils.RpmUtilsError as e:
+            raise yum.Errors.MiscError('Could not open local rpm file: %s: %s' % (pkg, e))
 
         self.deselectPackage(hdr['name'])
         yum.YumBase.installLocal(self, pkg, po, updateonly)
 
     def installHasFile(self, file):
         provides_pkg = self.whatProvides(file, None, None)
-        dlpkgs = map(
-                    lambda x: x.po,
-                    filter(
-                        lambda txmbr: txmbr.ts_state in ("i", "u"),
-                        self.tsInfo.getMembers()))
+        dlpkgs = [x.po for x in [txmbr for txmbr in self.tsInfo.getMembers() if txmbr.ts_state in ("i", "u")]]
 
         for p in dlpkgs:
             for q in provides_pkg:
@@ -325,18 +320,14 @@ class Yum(BackendPlugin, yum.YumBase):
         os.environ["LD_PRELOAD"] = ""
         try:
             (res, resmsg) = self.buildTransaction()
-        except yum.Errors.RepoError, e:
+        except yum.Errors.RepoError as e:
             raise CreatorError("Unable to download from repo : %s" %(e,))
 
         if res != 2:
             raise CreatorError("Failed to build transaction : %s" \
                                % str.join("\n", resmsg))
 
-        dlpkgs = map(
-                    lambda x: x.po,
-                    filter(
-                        lambda txmbr: txmbr.ts_state in ("i", "u"),
-                        self.tsInfo.getMembers()))
+        dlpkgs = [x.po for x in [txmbr for txmbr in self.tsInfo.getMembers() if txmbr.ts_state in ("i", "u")]]
 
         # record all pkg and the content
         for pkg in dlpkgs:
@@ -347,14 +338,14 @@ class Yum(BackendPlugin, yum.YumBase):
                             }
             self.__pkgs_content[pkg_long_name] = pkg.files
             license = pkg.license
-            if license in self.__pkgs_license.keys():
+            if license in list(self.__pkgs_license.keys()):
                 self.__pkgs_license[license].append(pkg_long_name)
             else:
                 self.__pkgs_license[license] = [pkg_long_name]
 
         total_count = len(dlpkgs)
         cached_count = 0
-        download_total_size = sum(map(lambda x: int(x.packagesize), dlpkgs))
+        download_total_size = sum([int(x.packagesize) for x in dlpkgs])
 
         msger.info("\nChecking packages cache and packages integrity ...")
         for po in dlpkgs:
@@ -373,7 +364,7 @@ class Yum(BackendPlugin, yum.YumBase):
             raise CreatorError("No enough space used for downloading.")
 
         # record the total size of installed pkgs
-        pkgs_total_size = 0L
+        pkgs_total_size = 0
         for x in dlpkgs:
             if hasattr(x, 'installedsize'):
                 pkgs_total_size += int(x.installedsize)
@@ -425,11 +416,11 @@ class Yum(BackendPlugin, yum.YumBase):
             self.runTransaction(cb)
             self._cleanupRpmdbLocks(self.conf.installroot)
 
-        except rpmUtils.RpmUtilsError, e:
+        except rpmUtils.RpmUtilsError as e:
             raise CreatorError("mic does NOT support delta rpm: %s" % e)
-        except yum.Errors.RepoError, e:
+        except yum.Errors.RepoError as e:
             raise CreatorError("Unable to download from repo : %s" % e)
-        except yum.Errors.YumBaseError, e:
+        except yum.Errors.YumBaseError as e:
             raise CreatorError("Unable to install: %s" % e)
         finally:
             msger.disable_logstderr()
@@ -447,7 +438,7 @@ class Yum(BackendPlugin, yum.YumBase):
         if not pkgname:
             return None
 
-        pkg = filter(lambda txmbr: txmbr.po.name == pkgname, self.tsInfo.getMembers())
+        pkg = [txmbr for txmbr in self.tsInfo.getMembers() if txmbr.po.name == pkgname]
         if not pkg:
             return None
         return pkg[0].po.filelist
@@ -459,7 +450,7 @@ class Yum(BackendPlugin, yum.YumBase):
             proxies = None
             url = pkgs[0].remote_url
             repoid = pkgs[0].repoid
-            repos = filter(lambda r: r.id == repoid, self.repos.listEnabled())
+            repos = [r for r in self.repos.listEnabled() if r.id == repoid]
 
             if repos:
                 proxy = repos[0].proxy

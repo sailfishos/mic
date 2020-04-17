@@ -72,7 +72,7 @@ def _general_print(head, color, msg = None, stream = None, level = 'normal'):
         return
 
     # encode raw 'unicode' str to utf8 encoded str
-    if msg and isinstance(msg, unicode):
+    if msg and isinstance(msg, str):
         msg = msg.encode('utf-8', 'ignore')
 
     errormsg = ''
@@ -126,7 +126,7 @@ def _color_print(head, color, msg, stream, level):
                 newline = True
 
     if msg is not None:
-        if isinstance(msg, unicode):
+        if isinstance(msg, str):
             msg = msg.encode('utf8', 'ignore')
 
         stream.write('%s%s' % (head, msg))
@@ -163,7 +163,7 @@ def _split_msg(head, msg):
     return head, msg
 
 def get_loglevel():
-    return (k for k,v in LOG_LEVELS.items() if v==LOG_LEVEL).next()
+    return next((k for k,v in list(LOG_LEVELS.items()) if v==LOG_LEVEL))
 
 def set_loglevel(level):
     global LOG_LEVEL
@@ -213,7 +213,7 @@ def ask(msg, default=True):
             msg += '(y/N) '
         if INTERACTIVE:
             while True:
-                repl = raw_input(msg)
+                repl = input(msg)
                 if repl.lower() == 'y':
                     return True
                 elif repl.lower() == 'n':
@@ -243,7 +243,7 @@ def choice(msg, choices, default=0):
         msg += " [%s] " % '/'.join(choices)
         if INTERACTIVE:
             while True:
-                repl = raw_input(msg)
+                repl = input(msg)
                 if repl in choices:
                     return repl
                 elif not repl.strip():
@@ -262,7 +262,7 @@ def pause(msg=None):
         _general_print('\rQ', ASK_COLOR, '')
         if msg is None:
             msg = 'press <ENTER> to continue ...'
-        raw_input(msg)
+        input(msg)
 
 def set_logfile(fpath):
     global LOG_FILE_FP

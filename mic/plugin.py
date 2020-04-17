@@ -16,8 +16,8 @@
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import os, sys
-import msger
-import pluginbase
+from . import msger
+from . import pluginbase
 from mic.conf import configmgr
 from mic.utils import errors
 
@@ -59,7 +59,7 @@ class PluginMgr(object):
             # the value True/False means "loaded"
 
     def _load_all(self):
-        for (pdir, loaded) in self.plugin_dirs.iteritems():
+        for (pdir, loaded) in self.plugin_dirs.items():
             if loaded: continue
 
             sys.path.insert(0, pdir)
@@ -74,7 +74,7 @@ class PluginMgr(object):
                             self.plugin_dirs[pdir] = True
                             msger.debug("Plugin module %s:%s imported"\
                                         % (mod, pymod.__file__))
-                        except ImportError, e:
+                        except ImportError as e:
                             msger.warning('Loading failed, skip plugin %s/%s'\
                                           % (os.path.basename(pdir), mod))
 

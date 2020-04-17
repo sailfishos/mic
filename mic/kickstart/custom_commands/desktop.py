@@ -90,6 +90,6 @@ class Moblin_Desktop(KickstartCommand):
         if extra:
             m = _("Unexpected arguments to %(command)s command: %(options)s") \
                   % {"command": "desktop", "options": extra}
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=m)
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg=m))
 
         self._setToSelf(self.op, opts)

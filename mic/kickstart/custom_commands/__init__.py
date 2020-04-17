@@ -1,7 +1,7 @@
-import desktop
-import moblinrepo
-import partition
-import btrfs
+from . import desktop
+from . import moblinrepo
+from . import partition
+from . import btrfs
 
 __all__ = (
     "Moblin_Desktop",

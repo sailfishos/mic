@@ -5,7 +5,7 @@ import sys
 import rpm
 import glob
 import shutil
-import StringIO
+import io
 import subprocess
 import unittest
 from mic import plugin as pluginmgr
@@ -32,7 +32,7 @@ class BaseImgrTest(unittest.TestCase):
     def setUp(self):
         self.stdout = sys.stdout
         self.stream = sys.stdout
-        msger.STREAM = StringIO.StringIO()
+        msger.STREAM = io.StringIO()
         shutil.copy2(KSCONF, KSBAK)
         with open(KSCONF, 'r') as f:
             content = f.read()
@@ -84,7 +84,7 @@ class BaseImgrTest(unittest.TestCase):
         creatoropts['pkgmgr'] = backend
         cfgmgr._ksconf =  KSCONF
         pkgmgr = None
-        for (key, pcls) in pluginmgr.PluginMgr().get_plugins('backend').iteritems():
+        for (key, pcls) in pluginmgr.PluginMgr().get_plugins('backend').items():
             if key == creatoropts['pkgmgr']:
                 pkgmgr = pcls
                 break

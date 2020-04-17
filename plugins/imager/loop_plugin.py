@@ -117,7 +117,7 @@ class LoopPlugin(ImagerPlugin):
                 msger.error("Cannot support fstype: %s" % fstype)
 
             name = os.path.join(tmpdir, name)
-            size = size * 1024L * 1024L
+            size = size * 1024 * 1024
             loop = myDiskMount(fs_related.SparseLoopbackDisk(name, size),
                                os.path.join(mntdir, mp.lstrip('/')),
                                fstype, size, label)
@@ -158,7 +158,7 @@ class LoopPlugin(ImagerPlugin):
                 raise errors.CreatorError("damaged tarball for loop images")
 
         img = target
-        imgsize = misc.get_file_size(img) * 1024L * 1024L
+        imgsize = misc.get_file_size(img) * 1024 * 1024
         imgtype = misc.get_image_type(img)
         if imgtype == "btrfsimg":
             fstype = "btrfs"

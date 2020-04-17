@@ -60,13 +60,13 @@ def creatoropts(args):
 
     # try to find the pkgmgr
     pkgmgr = None
-    for (key, pcls) in pluginmgr.get_plugins('backend').iteritems():
+    for (key, pcls) in pluginmgr.get_plugins('backend').items():
         if key == creatoropts['pkgmgr']:
             pkgmgr = pcls
             break
 
     if not pkgmgr:
-        pkgmgrs = pluginmgr.get_plugins('backend').keys()
+        pkgmgrs = list(pluginmgr.get_plugins('backend').keys())
         raise errors.CreatorError("Can't find package manager: %s (availables: %s)" % (creatoropts['pkgmgr'], ', '.join(pkgmgrs)))
 
     creatoropts['pkgmgr_pcls'] = pkgmgr

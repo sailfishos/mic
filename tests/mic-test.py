@@ -12,7 +12,7 @@ class MICTest(unittest.TestCase):
 def test_%s(self):
     self._testTemplate("%s")
 """ % (case, case)
-            exec method in locals()
+            exec(method, locals())
    
     def setUp(self):
         self.work_env = tempfile.mkdtemp()

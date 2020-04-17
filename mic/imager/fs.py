@@ -17,7 +17,7 @@
 
 import os, sys
 
-from baseimager import BaseImageCreator
+from .baseimager import BaseImageCreator
 from mic import msger
 from mic.utils import runner, misc
 from mic.utils.fs_related import *

@@ -2,7 +2,7 @@
 
 import os
 import sys
-import StringIO
+import io
 import unittest
 from mic import msger
 
@@ -14,8 +14,8 @@ class MsgerTest(unittest.TestCase):
     def setUp(self):
         self.stdout = sys.stdout
         self.stderr = sys.stderr
-        sys.stdout = StringIO.StringIO()
-        sys.stderr = StringIO.StringIO()
+        sys.stdout = io.StringIO()
+        sys.stderr = io.StringIO()
         msger.set_loglevel('normal')
         self.loglevel = msger.LOG_LEVEL
 
@@ -59,7 +59,7 @@ class MsgerTest(unittest.TestCase):
         excepted = "hello\n"
         cwd = os.getcwd()
         msger.enable_logstderr(cwd + "/__tmp_err.log")
-        print >>sys.stderr, "hello"
+        print("hello", file=sys.stderr)
         msger.disable_logstderr()
         self.assertEqual(excepted, sys.stderr.getvalue())
 

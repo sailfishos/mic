@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc., 59
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-from __future__ import with_statement
+
 import os
 import shutil
 import subprocess
@@ -191,7 +191,7 @@ def kill_processes(chrootdir):
                 pid = int(fp.split("/")[2])
                 msger.debug("Terminating %s" % pid)
                 os.kill(pid, 15)
-        except Exception, e:
+        except Exception as e:
             msger.warning("Failed to terminate %s %s" % (fp, e))
 
     time.sleep(5)
@@ -202,7 +202,7 @@ def kill_processes(chrootdir):
                 pid = int(fp.split("/")[2])
                 msger.debug("Killing %s" % pid)
                 os.kill(pid, 9)
-        except Exception, e:
+        except Exception as e:
             msger.warning("Failed to kill %s %s" % (fp, e))
 
     time.sleep(2)
@@ -291,7 +291,7 @@ def chroot(chrootdir, bindmounts = None, execute = "/bin/bash"):
                     'dev/stderr']
 
             ignlst = [os.path.join(saveto, x) for x in devs]
-            map(os.unlink, filter(os.path.exists, ignlst))
+            list(map(os.unlink, list(filter(os.path.exists, ignlst))))
         else:
             msger.warning(wrnmsg)
 
@@ -341,7 +341,7 @@ def chroot(chrootdir, bindmounts = None, execute = "/bin/bash"):
         globalmounts = setup_chrootenv(chrootdir, bindmounts)
         subprocess.call(execute, preexec_fn = mychroot, shell=True)
 
-    except OSError, err:
+    except OSError as err:
         raise errors.CreatorError("chroot err: %s" % str(err))
 
     finally:

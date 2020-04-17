@@ -88,7 +88,7 @@ class RawPlugin(ImagerPlugin):
     @classmethod
     def do_chroot(cls, target):
         img = target
-        imgsize = misc.get_file_size(img) * 1024L * 1024L
+        imgsize = misc.get_file_size(img) * 1024 * 1024
         partedcmd = fs_related.find_binary_path("parted")
         disk = fs_related.SparseLoopbackDisk(img, imgsize)
         imgmnt = misc.mkdtemp()
@@ -195,7 +195,7 @@ class RawPlugin(ImagerPlugin):
 
     @classmethod
     def do_unpack(cls, srcimg):
-        srcimgsize = (misc.get_file_size(srcimg)) * 1024L * 1024L
+        srcimgsize = (misc.get_file_size(srcimg)) * 1024 * 1024
         srcmnt = misc.mkdtemp("srcmnt")
         disk = fs_related.SparseLoopbackDisk(srcimg, srcimgsize)
         srcloop = PartitionedMount({'/dev/sdb':disk}, srcmnt, skipformat = True)

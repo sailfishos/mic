@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc., 59
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-from __future__ import with_statement
+
 import os
 import sys
 import errno
@@ -25,9 +25,9 @@ import random
 import string
 import time
 
-from errors import *
+from .errors import *
 from mic import msger
-import runner
+from . import runner
 
 def find_binary_inchroot(binary, chroot):
     paths = ["/usr/sbin",
@@ -43,11 +43,11 @@ def find_binary_inchroot(binary, chroot):
     return None
 
 def find_binary_path(binary):
-    if os.environ.has_key("PATH"):
+    if "PATH" in os.environ:
         paths = os.environ["PATH"].split(":")
     else:
         paths = []
-        if os.environ.has_key("HOME"):
+        if "HOME" in os.environ:
             paths += [os.environ["HOME"] + "/bin"]
         paths += ["/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin"]
 
@@ -63,7 +63,7 @@ def makedirs(dirname):
     """
     try:
         os.makedirs(dirname)
-    except OSError, err:
+    except OSError as err:
         if err.errno != errno.EEXIST:
             raise
 
@@ -310,7 +310,7 @@ class SparseLoopbackDisk(LoopbackDisk):
 
         msger.debug("Extending sparse file %s to %d" % (self.lofile, size))
         if create:
-            fd = os.open(self.lofile, flags, 0644)
+            fd = os.open(self.lofile, flags, 0o644)
         else:
             fd = os.open(self.lofile, flags)
 
@@ -379,7 +379,7 @@ class DiskMount(Mount):
         if self.rmdir and not self.mounted:
             try:
                 os.rmdir(self.mountdir)
-            except OSError, e:
+            except OSError as e:
                 pass
             self.rmdir = False
 
@@ -831,7 +831,7 @@ class BtrfsDiskMount(DiskMount):
         found = False
         """ Need to load btrfs module to mount it """
         load_module("btrfs")
-        for line in open("/proc/filesystems").xreadlines():
+        for line in open("/proc/filesystems"):
             if line.find("btrfs") > -1:
                 found = True
                 break
@@ -1013,7 +1013,7 @@ def create_image_minimizer(path, image, minimal_size):
     imgloop = LoopbackDisk(image, None) # Passing bogus size - doesn't matter
 
     cowloop = SparseLoopbackDisk(os.path.join(os.path.dirname(path), "osmin"),
-                                 64L * 1024L * 1024L)
+                                 64 * 1024 * 1024)
 
     snapshot = DeviceMapperSnapshot(imgloop, cowloop)
 
@@ -1034,7 +1034,7 @@ def create_image_minimizer(path, image, minimal_size):
 
 def load_module(module):
     found = False
-    for line in open('/proc/modules').xreadlines():
+    for line in open('/proc/modules'):
         if line.startswith("%s " % module):
             found = True
             break
@@ -1056,8 +1056,7 @@ class LoopDevice(object):
     def _genloopid(self):
         import glob
         fint = lambda x: x[9:].isdigit() and int(x[9:]) or 0
-        maxid = 1 + max(filter(lambda x: x<100,
-                               map(fint, glob.glob("/dev/loop[0-9]*"))))
+        maxid = 1 + max([x for x in map(fint, glob.glob("/dev/loop[0-9]*")) if x<100])
         if maxid < 10: maxid = 10
         if maxid >= 100: raise
         return maxid
@@ -1095,7 +1094,7 @@ class LoopDevice(object):
                     return
             try:
                 os.mknod(self.device,
-                         0664 | stat.S_IFBLK,
+                         0o664 | stat.S_IFBLK,
                          os.makedev(7, self.loopid))
             except:
                 raise MountError("Failed to create device %s" % self.device)
@@ -1107,7 +1106,7 @@ class LoopDevice(object):
             try:
                 self.cleanup()
                 self.device = None
-            except MountError, e:
+            except MountError as e:
                 msger.error("%s" % e)
 
     def cleanup(self):

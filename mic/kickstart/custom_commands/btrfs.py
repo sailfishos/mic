@@ -120,7 +120,7 @@ class BTRFS(KickstartCommand):
             parser.values.preexist = True
 
         def level_cb (option, opt_str, value, parser):
-            if self.levelMap.has_key(value):
+            if value in self.levelMap:
                 parser.values.ensure_value(option.dest, self.levelMap[value])
 
         op = KSOptionParser()
@@ -160,24 +160,24 @@ class BTRFS(KickstartCommand):
         data.lineno = self.lineno
 
         if len(extra) == 0 and not data.snapshot:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs must be given a mountpoint"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs must be given a mountpoint")))
 
         if len(extra) == 1 and not data.subvol:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs must be given a list of partitions"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs must be given a list of partitions")))
         elif len(extra) == 1:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs subvol requires specification of parent volume"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs subvol requires specification of parent volume")))
 
         if data.subvol and not data.name:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs subvolume requires a name"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs subvolume requires a name")))
 
         if data.snapshot and not data.name:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs snapshot requires a name"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs snapshot requires a name")))
 
         if data.snapshot and data.subvol:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs subvolume cannot be snapshot at the same time"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs subvolume cannot be snapshot at the same time")))
 
         if data.snapshot and not data.base:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs snapshot requires a base"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs snapshot requires a base")))
 
         if len(extra) > 0:
             data.mountpoint = extra[0]

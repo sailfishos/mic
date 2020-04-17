@@ -17,7 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc., 59
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-from __future__ import with_statement
+
 import os
 import sys
 import tempfile
@@ -27,7 +27,7 @@ import glob
 import hashlib
 import subprocess
 import distro
-import rpmmisc
+from . import rpmmisc
 import rpm
 
 try:
@@ -41,11 +41,11 @@ except ImportError:
     import cElementTree
 xmlparse = cElementTree.parse
 
-from errors import *
-from fs_related import *
-from rpmmisc import myurlgrab
-from proxy import get_proxy_for
-import runner
+from .errors import *
+from .fs_related import *
+from .rpmmisc import myurlgrab
+from .proxy import get_proxy_for
+from . import runner
 
 from mic import msger
 
@@ -98,7 +98,7 @@ def compressing(fpath, method):
     }
     if method not in comp_map:
         raise CreatorError("Unsupport compress format: %s, valid values: %s"
-                           % (method, ','.join(comp_map.keys())))
+                           % (method, ','.join(list(comp_map.keys()))))
     cmd = find_binary_path(comp_map[method])
     rc = runner.show([cmd, "-f", fpath])
     if rc:
@@ -161,7 +161,7 @@ def packing(dstfile, target):
         ext = ".tar" + ext
     if ext not in pack_formats:
         raise CreatorError("Unsupport pack format: %s, valid values: %s"
-                           % (ext, ','.join(pack_formats.keys())))
+                           % (ext, ','.join(list(pack_formats.keys()))))
     func = pack_formats[ext]
     # func should be callable
     func(dstfile, target)
@@ -217,7 +217,7 @@ def normalize_ksfile(ksconf, tokenmap):
         ksc = f.read()
 
     ksconf = os.path.basename(ksconf)
-    for token, value in tokenmap.items():
+    for token, value in list(tokenmap.items()):
         if "@%s@" % token in ksc:
             msger.info("Substitute macro variable @%s@ with %s" % (token, value))
             ksc = ksc.replace("@%s@" % token, value)
@@ -265,7 +265,7 @@ def selinux_check(arch, fstypes):
         raise CreatorError("Can't create arm image if selinux is enabled, "
                            "please run 'setenforce 0' to disable selinux")
 
-    use_btrfs = filter(lambda typ: typ == 'btrfs', fstypes)
+    use_btrfs = [typ for typ in fstypes if typ == 'btrfs']
     if use_btrfs and selinux_status == "Enforcing":
         raise CreatorError("Can't create btrfs image if selinux is enabled,"
                            " please run 'setenforce 0' to disable selinux")
@@ -592,7 +592,7 @@ def get_arch(repometadata):
 
     uniq_arch = []
     for i in range(len(archlist)):
-        if archlist[i] not in rpmmisc.archPolicies.keys():
+        if archlist[i] not in list(rpmmisc.archPolicies.keys()):
             continue
         need_append = True
         j = 0
@@ -754,7 +754,7 @@ def is_statically_linked(binary):
     return ", statically linked, " in runner.outs(['file', binary])
 
 def check_armv7_qemu_version(arch, qemu_emulator):
-    armv7_list = [arch for arch in rpmmisc.archPolicies.keys() if arch.startswith('armv7')]
+    armv7_list = [arch for arch in list(rpmmisc.archPolicies.keys()) if arch.startswith('armv7')]
     if arch in armv7_list:  # need qemu (>=0.13.0)
         qemuout = runner.outs([qemu_emulator, "-h"])
         m = re.search("version\s*([.\d]+)", qemuout)
@@ -867,7 +867,7 @@ def SrcpkgsDownload(pkgs, repometadata, instroot, cachedir):
     for lpkg in lpkgs_path:
         lpkg_name = get_src_name(os.path.basename(lpkg))
         lpkgs_dict[lpkg_name] = lpkg
-    localpkgs = lpkgs_dict.keys()
+    localpkgs = list(lpkgs_dict.keys())
 
     cached_count = 0
     destdir = instroot+'/usr/src/SRPMS'

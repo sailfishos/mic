@@ -3,7 +3,7 @@
 import os
 import sys
 import shutil
-import StringIO
+import io
 
 from mic import conf, msger
 from pykickstart.parser import KickstartParser

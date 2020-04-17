@@ -23,7 +23,7 @@ from mic import kickstart, msger
 from mic.utils import fs_related, rpmmisc, runner, misc
 from mic.utils.errors import CreatorError
 
-from loop import LoopImageCreator
+from .loop import LoopImageCreator
 class LiveImageCreatorBase(LoopImageCreator):
     """A base class for LiveCD image creators.
 
@@ -513,12 +513,12 @@ menu color cmdline 0 #ffffffff #00000000
                 long = "Boot %s(%s)" % (self.name, kernel)
 
             oldmenus["verify"]["long"] = "%s %s" % (oldmenus["verify"]["long"],
-                                                    long)
+                                                    int)
 
             cfg += self.__get_image_stanza(is_xen,
                                            fslabel = self.fslabel,
                                            liveargs = kernel_options,
-                                           long = long,
+                                           int = int,
                                            short = "linux" + index,
                                            extra = "",
                                            index = index)
@@ -536,7 +536,7 @@ menu color cmdline 0 #ffffffff #00000000
                 if len(menu) >= 2:
                     long = menu[1]
                 else:
-                    if menu[0] in oldmenus.keys():
+                    if menu[0] in list(oldmenus.keys()):
                         if menu[0] == "verify" and not self._has_checkisomd5():
                             continue
                         if menu[0] == "netinst":
@@ -554,7 +554,7 @@ menu color cmdline 0 #ffffffff #00000000
                 cfg += self.__get_image_stanza(is_xen,
                                                fslabel = self.fslabel,
                                                liveargs = kernel_options,
-                                               long = long,
+                                               int = int,
                                                short = short,
                                                extra = extra,
                                                index = index)
@@ -570,7 +570,7 @@ menu color cmdline 0 #ffffffff #00000000
             cfg += self.__get_image_stanza(is_xen,
                                            fslabel = self.fslabel,
                                            liveargs = kernel_options,
-                                           long = netinst["long"],
+                                           int = netinst["long"],
                                            short = netinst["short"],
                                            extra = netinst["extra"],
                                            index = default_index)
@@ -662,13 +662,13 @@ hiddenmenu
                 continue
             cfg += self.__get_efi_image_stanza(fslabel = self.fslabel,
                                                liveargs = kernel_options,
-                                               long = name,
+                                               int = name,
                                                extra = "", index = index)
             if checkisomd5:
                 cfg += self.__get_efi_image_stanza(
                                                fslabel = self.fslabel,
                                                liveargs = kernel_options,
-                                               long = "Verify and Boot " + name,
+                                               int = "Verify and Boot " + name,
                                                extra = "check",
                                                index = index)
             break
