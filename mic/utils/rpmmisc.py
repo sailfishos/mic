@@ -30,10 +30,7 @@ from mic import msger
 from .errors import CreatorError
 from .proxy import get_proxy_for
 from . import runner
-from urlgrabber import grabber, __version__ as grabber_version
-if rpm.labelCompare(grabber_version.split('.'), '3.9.0'.split('.')) == -1:
-    msger.warning("Version of python-urlgrabber is %s, lower than '3.9.0', "
-                  "you may encounter some network issues" % grabber_version)
+from urlgrabber import grabber
 
 def myurlgrab(url, filename, proxies, progress_obj = None, ignore_404 = False):
     g = grabber.URLGrabber()
