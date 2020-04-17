@@ -1,5 +1,6 @@
 from . import desktop
 from . import moblinrepo
+from . import micboot
 from . import partition
 from . import btrfs
 

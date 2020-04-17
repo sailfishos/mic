@@ -16,7 +16,7 @@
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import os
-import urllib.parse
+import urllib
 
 _my_proxies = {}
 _my_noproxy = None

@@ -23,7 +23,7 @@ import struct
 import termios
 import tempfile
 import shutil
-import urllib.parse
+import urllib
 import rpm
 import hashlib
 from mic import msger

@@ -19,7 +19,7 @@
 
 import os
 import shutil
-import urllib.parse
+import urllib
 import rpm
 
 import zypp

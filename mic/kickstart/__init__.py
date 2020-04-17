@@ -34,11 +34,11 @@ import pykickstart.version as ksversion
 from pykickstart.handlers.control import commandMap
 from pykickstart.handlers.control import dataMap
 
-from . import custom_commands.desktop as desktop
-from . import custom_commands.moblinrepo as moblinrepo
-from . import custom_commands.micboot as micboot
-from . import custom_commands.partition as partition
-from . import custom_commands.btrfs as btrfs
+from .custom_commands import desktop
+from .custom_commands import moblinrepo
+from .custom_commands import micboot
+from .custom_commands import partition
+from .custom_commands import btrfs
 
 class PrePackages(ksparser.Packages):
 
