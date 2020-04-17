@@ -71,10 +71,6 @@ def _general_print(head, color, msg = None, stream = None, level = 'normal'):
         # skip
         return
 
-    # encode raw 'unicode' str to utf8 encoded str
-    if msg and isinstance(msg, str):
-        msg = msg.encode('utf-8', 'ignore')
-
     errormsg = ''
     if CATCHERR_BUFFILE_FD > 0:
         size = os.lseek(CATCHERR_BUFFILE_FD , 0, os.SEEK_END)
@@ -84,7 +80,12 @@ def _general_print(head, color, msg = None, stream = None, level = 'normal'):
 
     # append error msg to LOG
     if errormsg:
+        if isinstance(errormsg, bytes):
+            errormsg = errormsg.decode()
         LOG_CONTENT += errormsg
+
+    if msg and isinstance(msg, bytes):
+        msg = msg.decode()
 
     # append normal msg to LOG
     save_msg = msg.strip() if msg else None
@@ -92,7 +93,7 @@ def _general_print(head, color, msg = None, stream = None, level = 'normal'):
         global HOST_TIMEZONE
         timestr = time.strftime("[%m/%d %H:%M:%S] ",
                                 time.gmtime(time.time() - HOST_TIMEZONE))
-        LOG_CONTENT += timestr + save_msg + '\n'
+        LOG_CONTENT += str(timestr) + save_msg + "\n"
         head += timestr
 
     if errormsg:
@@ -126,8 +127,6 @@ def _color_print(head, color, msg, stream, level):
                 newline = True
 
     if msg is not None:
-        if isinstance(msg, str):
-            msg = msg.encode('utf8', 'ignore')
 
         stream.write('%s%s' % (head, msg))
         if newline:
@@ -143,7 +142,9 @@ def _color_perror(head, color, msg, level = 'normal'):
 
 def _split_msg(head, msg):
     if isinstance(msg, list):
-        msg = '\n'.join(map(str, msg))
+        msg = "\n".join(map(lambda s: s.decode() if isinstance(s, bytes) else s, msg))
+    elif isinstance(msg, bytes):
+        msg = msg.decode()
 
     if msg.startswith('\n'):
         # means print \n at first
