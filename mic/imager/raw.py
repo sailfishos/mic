@@ -394,7 +394,7 @@ class RawImageCreator(BaseImageCreator):
             misc.packing(dst, self.__imgdir)
         else:
             msger.debug("moving disks to stage location")
-	    for imgfile in os.listdir(self.__imgdir):
+            for imgfile in os.listdir(self.__imgdir):
                 src = os.path.join(self.__imgdir, imgfile)
                 dst = os.path.join(self._outdir, imgfile)
                 msger.debug("moving %s to %s" % (src,dst))

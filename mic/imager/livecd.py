@@ -253,7 +253,7 @@ class LiveImageCreatorBase(LoopImageCreator):
         if isohybrid:
             args = [isohybrid, "-partok", iso ]
             if runner.show(args) != 0:
-             	raise CreatorError("Hybrid ISO creation failed!")
+                raise CreatorError("Hybrid ISO creation failed!")
 
         self.__implant_md5sum(iso)
 
