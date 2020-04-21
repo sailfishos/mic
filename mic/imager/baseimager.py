@@ -1027,7 +1027,7 @@ class BaseImageCreator(object):
 
             s.interp = "/bin/bash"
             s.script = s.script.replace("\r", "")
-            os.write(fd, s.script)
+            os.write(fd, s.script.encode())
             os.close(fd)
             os.chmod(path, 0o700)
 
@@ -1088,7 +1088,7 @@ class BaseImageCreator(object):
 
             s.interp = "/bin/bash"
             s.script = s.script.replace("\r", "")
-            os.write(fd, s.script)
+            os.write(fd, s.script.encode())
             os.close(fd)
             os.chmod(path, 0o700)
 
@@ -1239,7 +1239,7 @@ class BaseImageCreator(object):
 
             s.interp = "/bin/bash"
             s.script = s.script.replace("\r", "")
-            os.write(fd, s.script)
+            os.write(fd, s.script.encode())
             os.close(fd)
             os.chmod(path, 0o700)
 
