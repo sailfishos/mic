@@ -29,6 +29,7 @@ import subprocess
 import distro
 from . import rpmmisc
 import rpm
+from functools import cmp_to_key
 
 try:
     from hashlib import md5
@@ -569,9 +570,7 @@ def get_rpmver_in_repo(repometadata):
     if versionlist:
         versionlist.sort(
             reverse=True,
-            cmp=lambda a, b: rpm.labelCompare(
-                (None, a, None), (None, b, None)
-            )
+            key=cmp_to_key(lambda a, b: rpm.labelCompare((None, a, None), (None, b, None)))
         )
         return versionlist[0]
 
