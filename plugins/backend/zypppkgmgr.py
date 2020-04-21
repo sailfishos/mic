@@ -25,7 +25,7 @@ import rpm
 import zypp
 
 from mic import msger
-from mic.kickstart import ksparser
+from mic.kickstart import ksparser, ksconstants
 from mic.utils import misc, rpmmisc, runner, fs_related
 from mic.utils.proxy import get_proxy_for
 from mic.utils.errors import CreatorError, RepoError, RpmError
@@ -321,7 +321,7 @@ class Zypp(BackendPlugin):
 
         return groups_found
 
-    def selectGroup(self, grp, include = ksparser.GROUP_DEFAULT):
+    def selectGroup(self, grp, include = ksconstants.GROUP_DEFAULT):
         if not self.Z:
             self.__initialize_zypp()
         found = False
@@ -344,7 +344,7 @@ class Zypp(BackendPlugin):
                 break
 
         if found:
-            if include == ksparser.GROUP_REQUIRED:
+            if include == ksconstants.GROUP_REQUIRED:
                 list(map(
                     lambda p: self.deselectPackage(p),
                     list(grp.default_packages.keys())))
