@@ -936,14 +936,14 @@ def inst_langs(ks):
 def get_post_scripts(ks):
     scripts = []
     for s in ks.handler.scripts:
-        if s.type == ksparser.KS_SCRIPT_POST:
+        if s.type == ksconstants.KS_SCRIPT_POST:
             scripts.append(s)
     return scripts
 
 def get_pre_scripts(ks):
     scripts = []
     for s in ks.handler.scripts:
-        if s.type == ksparser.KS_SCRIPT_PRE:
+        if s.type == ksconstants.KS_SCRIPT_PRE:
             scripts.append(s)
     return scripts
 
