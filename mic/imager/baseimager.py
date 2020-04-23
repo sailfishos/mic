@@ -1144,24 +1144,34 @@ class BaseImageCreator(object):
         ksh = self.ks.handler
 
         msger.info('Applying configurations ...')
-        try:
-            kickstart.LanguageConfig(self._instroot).apply(ksh.lang)
-            kickstart.KeyboardConfig(self._instroot).apply(ksh.keyboard)
-            kickstart.TimezoneConfig(self._instroot).apply(ksh.timezone)
-            #kickstart.AuthConfig(self._instroot).apply(ksh.authconfig)
-            kickstart.FirewallConfig(self._instroot).apply(ksh.firewall)
-            kickstart.RootPasswordConfig(self._instroot).apply(ksh.rootpw)
-            kickstart.UserConfig(self._instroot).apply(ksh.user)
-            kickstart.ServicesConfig(self._instroot).apply(ksh.services)
-            kickstart.XConfig(self._instroot).apply(ksh.xconfig)
-            kickstart.NetworkConfig(self._instroot).apply(ksh.network)
-            kickstart.RPMMacroConfig(self._instroot).apply(self.ks)
-            kickstart.DesktopConfig(self._instroot).apply(ksh.desktop)
-            self.__save_repo_keys(repodata)
-            kickstart.MoblinRepoConfig(self._instroot).apply(ksh.repo, repodata)
-        except:
-            msger.warning("Failed to apply configuration to image")
-            raise
+        for config in (
+                ( "Language",       ksh.lang        ),
+                ( "Keyboard",       ksh.keyboard    ),
+                ( "Timezone",       ksh.timezone    ),
+                # ( "Auth",           ksh.authconfig  ),
+                ( "Firewall",       ksh.firewall    ),
+                ( "RootPassword",   ksh.rootpw      ),
+                ( "User",           ksh.user        ),
+                ( "Services",       ksh.services    ),
+                ( "X",              ksh.xconfig     ),
+                ( "Network",        ksh.network     ),
+                ( "RPMMacro",       self.ks         ),
+                ( "Desktop",        ksh.desktop     ),
+                ( "MoblinRepo",     ksh.repo        )
+                ):
+            try:
+                msger.info('Applying {}Config ...'.format(config[0]))
+                c = getattr(kickstart, "{}Config".format(config[0]))
+                if config[0] == "MoblinRepo":
+                    c(self._instroot).apply(config[1], repodata)
+                else:
+                    c(self._instroot).apply(config[1])
+
+                if config[0] == "Desktop":
+                    self.__save_repo_keys(repodata)
+            except:
+                msger.warning("Failed to apply {} configuration to image".format(config[0]))
+                raise
 
         self._create_bootconfig()
         self.__run_post_scripts()
