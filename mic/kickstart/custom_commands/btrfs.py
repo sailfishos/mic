@@ -154,9 +154,9 @@ class BTRFS(KickstartCommand):
         return op
 
     def parse(self, args):
-        (opts, extra) = self.op.parse_args(args=args, lineno=self.lineno)
+        (namespace, extra) = self.op.parse_known_args(args=args, lineno=self.lineno)
         data = self.handler.BTRFSData()
-        self._setToObj(self.op, opts, data)
+        self.set_to_obj(namespace, data)
         data.lineno = self.lineno
 
         if len(extra) == 0 and not data.snapshot:
