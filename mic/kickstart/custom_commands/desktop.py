@@ -82,14 +82,11 @@ class Moblin_Desktop(KickstartCommand):
         return op
 
     def parse(self, args):
-        if self.__new_version:
-            (opts, extra) = self.op.parse_args(args=args, lineno=self.lineno)
-        else:
-            (opts, extra) = self.op.parse_args(args=args)
+        opts, extra = self.op.parse_known_args(args=args, lineno=self.lineno)
 
         if extra:
             m = _("Unexpected arguments to %(command)s command: %(options)s") \
                   % {"command": "desktop", "options": extra}
             raise KickstartValueError(formatErrorMsg(self.lineno, msg=m))
 
-        self._setToSelf(self.op, opts)
+        self.set_to_self(opts)
