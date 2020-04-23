@@ -148,7 +148,7 @@ class Yum(BackendPlugin, yum.YumBase):
     def _writeConf(self, confpath, installroot):
         conf = Template(YUMCONF_TEMP).safe_substitute(installroot=installroot)
 
-        f = file(confpath, "w+")
+        f = open(confpath, "w+")
         f.write(conf)
         f.close()
 
