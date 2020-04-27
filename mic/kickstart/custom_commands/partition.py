@@ -15,7 +15,8 @@
 # this program; if not, write to the Free Software Foundation, Inc., 51
 # Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-from pykickstart.commands.partition import *
+from pykickstart.commands.partition import FC4_PartData, FC4_Partition
+from pykickstart.version import FC4
 
 class MeeGo_PartData(FC4_PartData):
     removedKeywords = FC4_PartData.removedKeywords
@@ -42,6 +43,6 @@ class MeeGo_Partition(FC4_Partition):
         op = FC4_Partition._getParser(self)
         # The alignment value is given in kBytes. e.g., value 8 means that
         # the partition is aligned to start from 8096 byte boundary.
-        op.add_option("--align", type="int", action="store", dest="align",
-                      default=None)
+        op.add_argument("--align", type=int, action="store", dest="align",
+                        default=None, version=FC4, help="")
         return op
