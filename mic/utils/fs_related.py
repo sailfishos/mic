@@ -507,9 +507,9 @@ class ExtDiskMount(DiskMount):
             t = bot + ((top - bot) / 2)
 
             if not resize2fs(self.disk.lofile, t):
-                top = t
+                top = int(t)
             else:
-                bot = t
+                bot = int(t)
         return top
 
     def resparse(self, size = None):
