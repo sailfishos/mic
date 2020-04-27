@@ -55,7 +55,7 @@ def myurlgrab(url, filename, proxies, progress_obj = None, ignore_404 = False):
             if e.errno == 14 and e.code in [404, 503] and ignore_404:
                 return None
             else:
-                raise CreatorError("URLGrabber error: %s - e.errno: %s" % (url, e.errno))
+                raise CreatorError("URLGrabber error: %s - %s" % (url, e))
 
     return filename
 
