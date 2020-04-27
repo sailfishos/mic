@@ -22,9 +22,7 @@ from pykickstart.base import *
 from pykickstart.errors import *
 from pykickstart.options import *
 
-import gettext
 import warnings
-_ = lambda x: gettext.ldgettext("pykickstart", x)
 
 class BTRFSData(BaseData):
     removedKeywords = BaseData.removedKeywords
@@ -160,24 +158,24 @@ class BTRFS(KickstartCommand):
         data.lineno = self.lineno
 
         if len(extra) == 0 and not data.snapshot:
-            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs must be given a mountpoint")))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs must be given a mountpoint"))
 
         if len(extra) == 1 and not data.subvol:
-            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs must be given a list of partitions")))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs must be given a list of partitions"))
         elif len(extra) == 1:
-            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs subvol requires specification of parent volume")))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs subvol requires specification of parent volume"))
 
         if data.subvol and not data.name:
-            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs subvolume requires a name")))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs subvolume requires a name"))
 
         if data.snapshot and not data.name:
-            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs snapshot requires a name")))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs snapshot requires a name"))
 
         if data.snapshot and data.subvol:
-            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs subvolume cannot be snapshot at the same time")))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs subvolume cannot be snapshot at the same time"))
 
         if data.snapshot and not data.base:
-            raise KickstartValueError(formatErrorMsg(self.lineno, msg=_("btrfs snapshot requires a base")))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs snapshot requires a base"))
 
         if len(extra) > 0:
             data.mountpoint = extra[0]
@@ -185,7 +183,7 @@ class BTRFS(KickstartCommand):
 
         # Check for duplicates in the data list.
         if data in self.dataList():
-            warnings.warn(_("A btrfs volume with the mountpoint %s has already been defined.") % data.label)
+            warnings.warn("A btrfs volume with the mountpoint '{}' has already been defined.".format(data.label))
 
         return data
 
