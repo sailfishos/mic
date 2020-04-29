@@ -755,7 +755,7 @@ def is_statically_linked(binary):
 def check_armv7_qemu_version(arch, qemu_emulator):
     armv7_list = [arch for arch in list(rpmmisc.archPolicies.keys()) if arch.startswith('armv7')]
     if arch in armv7_list:  # need qemu (>=0.13.0)
-        qemuout = runner.outs([qemu_emulator, "-h"])
+        qemuout = runner.outs([qemu_emulator, "-version"])
         m = re.search("version\s*([.\d]+)", qemuout)
         if m:
             qemu_version = m.group(1)
