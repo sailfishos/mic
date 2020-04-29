@@ -62,6 +62,8 @@ CATCHERR_BUFFILE_FD = -1
 CATCHERR_BUFFILE_PATH = None
 CATCHERR_SAVED_2 = -1
 
+LOG_PREVIOUS_NEWLINE = True
+
 def _general_print(head, color, msg = None, stream = None, level = 'normal'):
     global LOG_CONTENT
     if not stream:
@@ -127,10 +129,16 @@ def _color_print(head, color, msg, stream, level):
                 newline = True
 
     if msg is not None:
+        global LOG_PREVIOUS_NEWLINE
+
+        if newline and not LOG_PREVIOUS_NEWLINE:
+            stream.write('\n')
 
         stream.write('%s%s' % (head, msg))
         if newline:
             stream.write('\n')
+
+        LOG_PREVIOUS_NEWLINE = newline
 
     stream.flush()
 
