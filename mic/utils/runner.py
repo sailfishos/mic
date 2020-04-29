@@ -62,6 +62,11 @@ def runtool(cmdln_or_args, catch=1):
         serr = STDOUT
 
     try:
+        msger.debug("runner Popen({})".format(cmdln_or_args))
+    except Exception as e:
+        msger.error("runner debug: {}".format(e))
+
+    try:
         p = Popen(cmdln_or_args, stdout=sout, stderr=serr, shell=shell)
         (sout, serr) = p.communicate()
         # combine stdout and stderr, filter None out
