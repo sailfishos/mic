@@ -85,11 +85,11 @@ class Moblin_Repo(F8_Repo):
         op.add_argument("--save", action="store_true", dest="save",
                         default=False, version=F8, help="")
         op.add_argument("--proxy", type=str, action="store", dest="proxy",
-                        default=None, nargs=1, version=F8, help="")
+                        default=None, version=F8, help="")
         op.add_argument("--proxyuser", type=str, action="store",
-                        dest="proxy_username", default=None, nargs=1, version=F8, help="")
+                        dest="proxy_username", default=None, version=F8, help="")
         op.add_argument("--proxypasswd", type=str, action="store",
-                        dest="proxy_password", default=None, nargs=1, version=F8, help="")
+                        dest="proxy_password", default=None, version=F8, help="")
         op.add_argument("--debuginfo", action="store_true", dest="debuginfo",
                         default=False, version=F8, help="")
         op.add_argument("--source", action="store_true", dest="source",
@@ -97,7 +97,7 @@ class Moblin_Repo(F8_Repo):
         op.add_argument("--disable", action="store_true", dest="disable",
                         default=False, version=F8, help="")
         op.add_argument("--gpgkey", type=str, action="store", dest="gpgkey",
-                        default=None, nargs=1, version=F8, help="")
+                        default=None, version=F8, help="")
         op.add_argument("--ssl_verify", type=str, action="store",
                         dest="ssl_verify", default="yes", version=F8, help="")
         op.add_argument("--priority", type=int, action="store", dest="priority",
