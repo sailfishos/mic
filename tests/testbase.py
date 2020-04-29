@@ -2,9 +2,7 @@
 import os
 import sys
 import subprocess, re, shutil, glob
-import gettext
 
-_ = gettext.lgettext
 COLOR_BLACK = "\033[00m"
 COLOR_RED = "\033[1;31m"
 
@@ -94,6 +92,6 @@ def RunandCheck(object, work_env):
             fp.write(mic_cmd_msg)
             fp.close()
             '''
-            raise object.failureException(_("Expect and mic out msg are not constant\n%sExpect:%s\n\nMic out msg:%s%s") %(COLOR_RED,expect,mic_cmd_msg,COLOR_BLACK))
+            raise object.failureException("Expect and mic out msg are not constant\n%sExpect:%s\n\nMic out msg:%s%s" % (COLOR_RED,expect,mic_cmd_msg,COLOR_BLACK))
         else:
-            raise object.failureException(_("%s%s%s") %(COLOR_RED,errorinfo,COLOR_BLACK))
+            raise object.failureException("%s%s%s" % (COLOR_RED,errorinfo,COLOR_BLACK))
