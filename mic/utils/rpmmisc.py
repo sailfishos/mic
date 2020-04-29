@@ -123,12 +123,21 @@ class RPMInstallCallback:
         self.logString = []
         self.headmsg = "Installing"
 
+    def _bytes_to_str(self, s):
+        if isinstance(s, bytes):
+            return s.decode()
+        return s
+
     def _dopkgtup(self, hdr):
         tmpepoch = hdr['epoch']
         if tmpepoch is None: epoch = '0'
         else: epoch = str(tmpepoch)
 
-        return (hdr['name'], hdr['arch'], epoch, hdr['version'], hdr['release'])
+        return (self._bytes_to_str(hdr['name']),
+                self._bytes_to_str(hdr['arch']),
+                epoch,
+                self._bytes_to_str(hdr['version']),
+                self._bytes_to_str(hdr['release']))
 
     def _makeHandle(self, hdr):
         handle = '%s:%s.%s-%s-%s' % (hdr['epoch'], hdr['name'], hdr['version'],
@@ -237,7 +246,7 @@ class RPMInstallCallback:
                         msger.info(msg)
 
                         if self.total_installed == self.total_actions:
-                            msger.raw('')
+                            msger.verbose("Installed packages:")
                             msger.verbose('\n'.join(self.logString))
 
         elif what == rpm.RPMCALLBACK_UNINST_START:
