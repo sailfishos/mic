@@ -191,6 +191,9 @@ def kill_processes(chrootdir):
                 pid = int(fp.split("/")[2])
                 msger.debug("Terminating %s" % pid)
                 os.kill(pid, 15)
+        except FileNotFoundError:
+            # Skip defunct processes
+            pass
         except Exception as e:
             msger.warning("Failed to terminate %s %s" % (fp, e))
 
@@ -202,6 +205,9 @@ def kill_processes(chrootdir):
                 pid = int(fp.split("/")[2])
                 msger.debug("Killing %s" % pid)
                 os.kill(pid, 9)
+        except FileNotFoundError:
+            # Skip defunct processes
+            pass
         except Exception as e:
             msger.warning("Failed to kill %s %s" % (fp, e))
 
