@@ -125,12 +125,8 @@ class BTRFS(KickstartCommand):
                 self._levelMap = kwargs.pop('_levelMap', [])
                 super(LevelAction, self).__init__(option_strings, dest, **kwargs)
 
-            def __call__(self, parser, namespace, values, option_string):
-                if values[0] in self._levelMap.keys():
-                    if self.dest == "dataLevel":
-                        namespace.dataLevel = self._levelMap.get(values[0])
-                    else:
-                        namespace.metaDataLevel = self._levelMap.get(values[0])
+            def __call__(self, parser, namespace, value, option_string):
+                setattr(namespace, self.dest, self._levelMap.get(value))
 
         op = KSOptionParser(prog="btrfs", version=F8, description="")
         op.add_argument("--noformat", action=ValueAction,
@@ -141,9 +137,9 @@ class BTRFS(KickstartCommand):
         # label, data, metadata
         op.add_argument("--label", dest="label", default="", version=F8, help="")
         op.add_argument("--data", dest="dataLevel", action=LevelAction,
-                        type=str, nargs=1, version=F8, help="", _levelMap=self.levelMap)
+                        type=str, version=F8, help="", _levelMap=self.levelMap)
         op.add_argument("--metadata", dest="metaDataLevel", action=LevelAction,
-                        type=str, nargs=1, version=F8, help="", _levelMap=self.levelMap)
+                        type=str, version=F8, help="", _levelMap=self.levelMap)
 
         op.add_argument("--quota", dest="quota", action="store_true",
                         default=False, version=F8, help="")
