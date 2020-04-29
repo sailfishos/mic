@@ -61,25 +61,21 @@ class Moblin_Desktop(KickstartCommand):
         op.add_argument("--defaultdesktop", dest="defaultdesktop",
                                             action="store",
                                             type=str,
-                                            nargs=1,
                                             version=F8,
                                             help="")
         op.add_argument("--autologinuser", dest="autologinuser",
                                            action="store",
                                            type=str,
-                                           nargs=1,
                                            version=F8,
                                            help="")
         op.add_argument("--defaultdm", dest="defaultdm",
                                        action="store",
                                        type=str,
-                                       nargs=1,
                                        version=F8,
                                        help="")
         op.add_argument("--session", dest="session",
                                      action="store",
                                      type=str,
-                                     nargs=1,
                                      version=F8,
                                      help="")
         return op
