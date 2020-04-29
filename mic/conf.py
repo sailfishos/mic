@@ -206,7 +206,7 @@ class ConfigMgr(object):
         self.create['repomd'] = misc.get_metadata_from_repos(
                                                     ksrepos,
                                                     self.create['cachedir'])
-        msger.raw(" DONE")
+        msger.info("Repo metadata retrieved.")
 
         self.create['rpmver'] = misc.get_rpmver_in_repo(self.create['repomd'])
 
