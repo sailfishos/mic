@@ -33,7 +33,7 @@ from . import runner
 from urlgrabber import grabber
 
 def myurlgrab(url, filename, proxies, progress_obj = None, ignore_404 = False):
-    g = grabber.URLGrabber()
+    g = grabber.URLGrabber(netrc_optional=True)
     if progress_obj is None:
         progress_obj = TextProgress()
 
