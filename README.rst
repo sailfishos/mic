@@ -301,12 +301,8 @@ for each instance using `--outdir`, example as follows: ::
 Known Issues
 ============
 
-Bug of latest "syslinux" package
---------------------------------
-In some new Linux distributions, the "syslinux" package in their official
-software repositories is the version 4.04. It will cause segment fault for
-a fatal bug, and mic will failed with syslinux installation errors.
+Yum backend
+-----------
 
-The solution is to install the patched "syslinux" package in MeeGo or Tizen's
-tools repos, until the official released one being fixed.
-
+Yum backend hasn't been tested, only run through 2to3. Most likely the backend
+doesn't function properly yet.
