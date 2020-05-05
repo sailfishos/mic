@@ -1,5 +1,5 @@
 
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2007 Red Hat  Inc.
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
@@ -17,7 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc., 59
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-from __future__ import with_statement
+
 import os, sys
 import stat
 import tempfile
@@ -91,7 +91,7 @@ class BaseImageCreator(object):
                      }
 
             # update setting from createopts
-            for key in createopts.keys():
+            for key in list(createopts.keys()):
                 if key in optmap:
                     option = optmap[key]
                 else:
@@ -278,12 +278,12 @@ class BaseImageCreator(object):
         shutil.move(self._instroot, self._outdir + "/" + self.name)
 
     def get_installed_packages(self):
-        return self._pkgs_content.keys()
+        return list(self._pkgs_content.keys())
 
     def _save_recording_pkgs(self, destdir):
         """Save the list or content of installed packages to file.
         """
-        pkgs = self._pkgs_content.keys()
+        pkgs = list(self._pkgs_content.keys())
         pkgs.sort() # inplace op
 
         if not os.path.exists(destdir):
@@ -299,7 +299,7 @@ class BaseImageCreator(object):
         if 'url' in self._recording_pkgs :
             namefile = os.path.join(destdir, self.name + '.urls')
             f = open(namefile, "w")
-            content = '\n'.join(sorted([url for pkg, url in self._pkgs_urls.items()]))
+            content = '\n'.join(sorted([url for pkg, url in list(self._pkgs_urls.items())]))
             f.write(content)
             f.close()
             self.outimage.append(namefile)
@@ -314,9 +314,9 @@ class BaseImageCreator(object):
 
                 pkgcont = self._pkgs_content[pkg]
                 items = []
-                if pkgcont.has_key('dir'):
-                    items = map(lambda x:x+'/', pkgcont['dir'])
-                if pkgcont.has_key('file'):
+                if 'dir' in pkgcont:
+                    items = [x+'/' for x in pkgcont['dir']]
+                if 'file' in pkgcont:
                     items.extend(pkgcont['file'])
 
                 if items:
@@ -615,7 +615,8 @@ class BaseImageCreator(object):
         try:
             self.__builddir = tempfile.mkdtemp(dir = self.tmpdir,
                                                prefix = "imgcreate-")
-        except OSError, (err, msg):
+        except OSError as xxx_todo_changeme3:
+            (err, msg) = xxx_todo_changeme3.args
             raise CreatorError("Failed create build directory in %s: %s" %
                                (self.tmpdir, msg))
     def _check_imgdir(self):
@@ -653,13 +654,13 @@ class BaseImageCreator(object):
     def __create_minimal_dev(self):
         """Create a minimal /dev so that we don't corrupt the host /dev"""
         origumask = os.umask(0000)
-        devices = (('null',   1, 3, 0666),
-                   ('urandom',1, 9, 0666),
-                   ('random', 1, 8, 0666),
-                   ('full',   1, 7, 0666),
-                   ('ptmx',   5, 2, 0666),
-                   ('tty',    5, 0, 0666),
-                   ('zero',   1, 5, 0666))
+        devices = (('null',   1, 3, 0o666),
+                   ('urandom',1, 9, 0o666),
+                   ('random', 1, 8, 0o666),
+                   ('full',   1, 7, 0o666),
+                   ('ptmx',   5, 2, 0o666),
+                   ('tty',    5, 0, 0o666),
+                   ('zero',   1, 5, 0o666))
 
         links = (("/proc/self/fd", "/dev/fd"),
                  ("/proc/self/fd/0", "/dev/stdin"),
@@ -982,14 +983,14 @@ class BaseImageCreator(object):
                 self.__deselect_packages(pkg_manager)
                 self.__localinst_packages(pkg_manager)
 
-                BOOT_SAFEGUARD = 256L * 1024 * 1024 # 256M
+                BOOT_SAFEGUARD = 256 * 1024 * 1024 # 256M
                 checksize = self._root_fs_avail
                 if checksize:
                     checksize -= BOOT_SAFEGUARD
                 if self.target_arch:
                     pkg_manager._add_prob_flags(rpm.RPMPROB_FILTER_IGNOREARCH)
                 pkg_manager.runInstall(checksize)
-            except CreatorError, e:
+            except CreatorError as e:
                 raise
             else:
                 self._pkgs_content = pkg_manager.getAllContent()
@@ -1026,9 +1027,9 @@ class BaseImageCreator(object):
 
             s.interp = "/bin/bash"
             s.script = s.script.replace("\r", "")
-            os.write(fd, s.script)
+            os.write(fd, s.script.encode())
             os.close(fd)
-            os.chmod(path, 0700)
+            os.chmod(path, 0o700)
 
             env = self._get_post_scripts_env(s.inChroot)
 
@@ -1061,7 +1062,8 @@ class BaseImageCreator(object):
                             raise CreatorError("Failed to execute %%pre script with %s" % s.interp)
                         else:
                             msger.info("Script returned with non zero status, ignoring.")
-                except OSError, (err, msg):
+                except OSError as xxx_todo_changeme:
+                    (err, msg) = xxx_todo_changeme.args
                     raise CreatorError("Failed to execute %%post script "
                                        "with '%s' : %s" % (s.interp, msg))
             finally:
@@ -1086,9 +1088,9 @@ class BaseImageCreator(object):
 
             s.interp = "/bin/bash"
             s.script = s.script.replace("\r", "")
-            os.write(fd, s.script)
+            os.write(fd, s.script.encode())
             os.close(fd)
-            os.chmod(path, 0700)
+            os.chmod(path, 0o700)
 
             # the name is post but it shouldn't be doing anything post specific
             env = self._get_post_scripts_env(s.inChroot)
@@ -1111,7 +1113,8 @@ class BaseImageCreator(object):
                             raise CreatorError("Failed to execute %%pre script with %s" % s.interp)
                         else:
                             msger.info("Script returned with non zero status, ignoring.")
-                except OSError, (err, msg):
+                except OSError as xxx_todo_changeme1:
+                    (err, msg) = xxx_todo_changeme1.args
                     raise CreatorError("Failed to execute %%pre script "
                                        "with '%s' : %s" % (s.interp, msg))
             finally:
@@ -1141,24 +1144,34 @@ class BaseImageCreator(object):
         ksh = self.ks.handler
 
         msger.info('Applying configurations ...')
-        try:
-            kickstart.LanguageConfig(self._instroot).apply(ksh.lang)
-            kickstart.KeyboardConfig(self._instroot).apply(ksh.keyboard)
-            kickstart.TimezoneConfig(self._instroot).apply(ksh.timezone)
-            #kickstart.AuthConfig(self._instroot).apply(ksh.authconfig)
-            kickstart.FirewallConfig(self._instroot).apply(ksh.firewall)
-            kickstart.RootPasswordConfig(self._instroot).apply(ksh.rootpw)
-            kickstart.UserConfig(self._instroot).apply(ksh.user)
-            kickstart.ServicesConfig(self._instroot).apply(ksh.services)
-            kickstart.XConfig(self._instroot).apply(ksh.xconfig)
-            kickstart.NetworkConfig(self._instroot).apply(ksh.network)
-            kickstart.RPMMacroConfig(self._instroot).apply(self.ks)
-            kickstart.DesktopConfig(self._instroot).apply(ksh.desktop)
-            self.__save_repo_keys(repodata)
-            kickstart.MoblinRepoConfig(self._instroot).apply(ksh.repo, repodata)
-        except:
-            msger.warning("Failed to apply configuration to image")
-            raise
+        for config in (
+                ( "Language",       ksh.lang        ),
+                ( "Keyboard",       ksh.keyboard    ),
+                ( "Timezone",       ksh.timezone    ),
+                # ( "Auth",           ksh.authconfig  ),
+                ( "Firewall",       ksh.firewall    ),
+                ( "RootPassword",   ksh.rootpw      ),
+                ( "User",           ksh.user        ),
+                ( "Services",       ksh.services    ),
+                ( "X",              ksh.xconfig     ),
+                ( "Network",        ksh.network     ),
+                ( "RPMMacro",       self.ks         ),
+                ( "Desktop",        ksh.desktop     ),
+                ( "MoblinRepo",     ksh.repo        )
+                ):
+            try:
+                msger.info('Applying {}Config ...'.format(config[0]))
+                c = getattr(kickstart, "{}Config".format(config[0]))
+                if config[0] == "MoblinRepo":
+                    c(self._instroot).apply(config[1], repodata)
+                else:
+                    c(self._instroot).apply(config[1])
+
+                if config[0] == "Desktop":
+                    self.__save_repo_keys(repodata)
+            except:
+                msger.warning("Failed to apply {} configuration to image".format(config[0]))
+                raise
 
         self._create_bootconfig()
         self.__run_post_scripts()
@@ -1236,9 +1249,9 @@ class BaseImageCreator(object):
 
             s.interp = "/bin/bash"
             s.script = s.script.replace("\r", "")
-            os.write(fd, s.script)
+            os.write(fd, s.script.encode())
             os.close(fd)
-            os.chmod(path, 0700)
+            os.chmod(path, 0o700)
 
             # the name is post but it shouldn't be doing anything post specific
             env = self._get_post_scripts_env(s.inChroot)
@@ -1261,7 +1274,8 @@ class BaseImageCreator(object):
                             raise CreatorError("Failed to execute %%pack script with %s" % s.interp)
                         else:
                             msger.info("Script returned with non zero status, ignoring.")
-                except OSError, (err, msg):
+                except OSError as xxx_todo_changeme2:
+                    (err, msg) = xxx_todo_changeme2.args
                     raise CreatorError("Failed to execute %%pack script "
                                        "with '%s' : %s" % (s.interp, msg))
             finally:

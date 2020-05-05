@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
 # Copyright (c) 2007, 2008 Red Hat, Inc.
@@ -36,7 +36,7 @@ class PartitionedMount(Mount):
     def __init__(self, disks, mountdir, skipformat = False):
         Mount.__init__(self, mountdir)
         self.disks = {}
-        for name in disks.keys():
+        for name in list(disks.keys()):
             self.disks[name] = { 'disk': disks[name],  # Disk object
                                  'mapped': False, # True if kpartx mapping exists
                                  'numpart': 0, # Number of allocate partitions
@@ -138,7 +138,7 @@ class PartitionedMount(Mount):
         for n in range(len(self.partitions)):
             p = self.partitions[n]
 
-            if not self.disks.has_key(p['disk']):
+            if p['disk'] not in self.disks:
                 raise MountError("No disk %s for partition %s" % (p['disk'], p['mountpoint']))
 
             if not mbr_sector_skipped:
@@ -207,7 +207,7 @@ class PartitionedMount(Mount):
             msger.debug("Skipping disk format, because skipformat flag is set.")
             return
 
-        for dev in self.disks.keys():
+        for dev in list(self.disks.keys()):
             d = self.disks[dev]
             msger.debug("Initializing partition table for %s" % (d['disk'].device))
             rc, out = runner.runtool([self.parted, "-s", d['disk'].device, "mklabel", "msdos"], catch=3)
@@ -270,7 +270,7 @@ class PartitionedMount(Mount):
         """Load it if dm_snapshot isn't loaded"""
         load_module("dm_snapshot")
 
-        for dev in self.disks.keys():
+        for dev in list(self.disks.keys()):
             d = self.disks[dev]
             if d['mapped']:
                 continue
@@ -328,7 +328,7 @@ class PartitionedMount(Mount):
             d['mapped'] = True
 
     def __unmap_partitions(self):
-        for dev in self.disks.keys():
+        for dev in list(self.disks.keys()):
             d = self.disks[dev]
             if not d['mapped']:
                 continue
@@ -362,7 +362,7 @@ class PartitionedMount(Mount):
     def cleanup(self):
         Mount.cleanup(self)
         self.__unmap_partitions()
-        for dev in self.disks.keys():
+        for dev in list(self.disks.keys()):
             d = self.disks[dev]
             try:
                 d['disk'].cleanup()
@@ -593,7 +593,7 @@ class PartitionedMount(Mount):
         self.snapshot_created = True
 
     def mount(self):
-        for dev in self.disks.keys():
+        for dev in list(self.disks.keys()):
             d = self.disks[dev]
             d['disk'].create()
 

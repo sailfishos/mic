@@ -1,9 +1,7 @@
 Name:       mic
-
-%{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 Summary:    Image Creator for Linux Distributions
-Version:    0.14
-Release:    mer7
+Version:    1.0.0
+Release:    1
 Group:      System/Base
 License:    GPLv2
 BuildArch:  noarch
@@ -12,7 +10,7 @@ Source0:    %{name}-%{version}.tar.bz2
 Source1:    mic.conf
 Requires:   util-linux
 Requires:   coreutils
-Requires:   python >= 2.5
+Requires:   python3-base >= 3.8
 Requires:   e2fsprogs
 Requires:   dosfstools >= 2.11-8
 Requires:   syslinux >= 3.82
@@ -24,15 +22,17 @@ Requires:   gzip
 Requires:   bzip2
 Requires:   zip
 Requires:   gnu-tar
-Requires:   python-urlgrabber
+Requires:   python3-urlgrabber >= 4.1.0+git1
 Requires:   squashfs-tools >= 4.0
 Requires:   btrfs-progs
-Requires:   python-distro
+Requires:   python3-distro
 Requires:   python-m2crypto
-Requires:   python-zypp >= 0.5.9.1
+Requires:   python3-zypp >= 0.7.5
 Requires:   rpm-python
 Requires:   psmisc
-BuildRequires:  python-devel
+Requires:   python3-pykickstart
+BuildRequires:  python3-devel
+BuildRequires:  python3-setuptools
 BuildRoot:  %{_tmppath}/%{name}-%{version}-build
 
 %description
@@ -77,17 +77,11 @@ Requires:   yum >= 3.2.24
 %setup -q -n %{name}-%{version}
 
 %build
-
-CFLAGS="$RPM_OPT_FLAGS" %{__python} setup.py build
-
+%{py3_build}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%if 0%{?suse_version}
-%{__python} setup.py install --root=$RPM_BUILD_ROOT --prefix=%{_prefix}
-%else
-%{__python} setup.py install --root=$RPM_BUILD_ROOT -O1
-%endif
+%{py3_install}
 
 # install our mic.conf
 mkdir -p %{buildroot}/%{_sysconfdir}/%{name}
@@ -98,7 +92,7 @@ install -m644 %{SOURCE1} %{buildroot}/%{_sysconfdir}/%{name}/%{name}.conf
 %doc README.rst
 %dir %{_sysconfdir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
-%{python_sitelib}/*
+%{python3_sitelib}/*
 %dir %{_prefix}/lib/%{name}
 %dir %{_prefix}/lib/%{name}/plugins
 %dir %{_prefix}/lib/%{name}/plugins/*

@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import sys
 import shutil
 import tarfile
-import StringIO
+import io
 import unittest
 from mic import chroot
 
@@ -23,8 +23,8 @@ class ChrootTest(unittest.TestCase):
         self.chrootdir = TEST_CHROOT_DIR
         self.stdout = sys.stdout
         self.stderr = sys.stderr
-        sys.stdout = StringIO.StringIO()
-        sys.stderr = StringIO.StringIO()
+        sys.stdout = io.StringIO()
+        sys.stderr = io.StringIO()
 
     def tearDown(self):
         sys.stdout = self.stdout
@@ -34,7 +34,7 @@ class ChrootTest(unittest.TestCase):
     def testChroot(self):
         try:
             chroot.chroot(TEST_CHROOT_DIR, None, 'exit')
-        except Exception, e:
+        except Exception as e:
             raise self.failureException(e)
 
 if __name__ == "__main__":

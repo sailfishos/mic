@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import sys
 import shutil
-import StringIO
+import io
 
 from mic import conf, msger
 from pykickstart.parser import KickstartParser

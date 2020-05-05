@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2011 Intel, Inc.
 #
@@ -23,7 +23,7 @@ from mic import kickstart, msger
 from mic.utils.errors import CreatorError, MountError
 from mic.utils import misc, runner, fs_related as fs
 
-from baseimager import BaseImageCreator
+from .baseimager import BaseImageCreator
 
 # The maximum string length supported for LoopImageCreator.fslabel
 FSLABEL_MAXLEN = 32
@@ -48,7 +48,7 @@ def save_mountpoints(fpath, loops, arch = None):
     for loop in loops:
         part = doc.createElement("partition")
         imgroot.appendChild(part)
-        for (key, val) in loop.items():
+        for (key, val) in list(loop.items()):
             if isinstance(val, fs.Mount):
                 continue
             part.setAttribute(key, str(val))
@@ -73,7 +73,7 @@ def load_mountpoints(fpath):
         dom = minidom.parse(rf)
     imgroot = dom.documentElement
     for part in imgroot.getElementsByTagName("partition"):
-        p  = dict(part.attributes.items())
+        p  = dict(list(part.attributes.items()))
 
         try:
             mp = (p['mountpoint'], p['label'], p['name'],
@@ -147,7 +147,7 @@ class LoopImageCreator(BaseImageCreator):
                 loop_data = {'mountpoint': mp,
                              'label': label,
                              'name': imgname,
-                             'size': part.size or 4096L * 1024 * 1024,
+                             'size': part.size or 4096 * 1024 * 1024,
                              'fstype': part.fstype or 'ext3',
                              'fsopts': part.fsopts,
                              'loop': None,  # to be created in _mount_instroot
@@ -189,7 +189,7 @@ class LoopImageCreator(BaseImageCreator):
 
         if self.ks:
             self.__image_size = kickstart.get_image_size(self.ks,
-                                                         4096L * 1024 * 1024)
+                                                         4096 * 1024 * 1024)
         else:
             self.__image_size = 0
 
@@ -357,7 +357,7 @@ class LoopImageCreator(BaseImageCreator):
                  "mountpoint": "/",
                  "label": self.name,
                  "name": imgname,
-                 "size": self.__image_size or 4096L,
+                 "size": self.__image_size or 4096,
                  "fstype": self.__fstype or "ext3",
                  "loop": None
                  })
@@ -367,7 +367,7 @@ class LoopImageCreator(BaseImageCreator):
         for loop in self._instloops:
             fstype = loop['fstype']
             mp = os.path.join(self._instroot, loop['mountpoint'].lstrip('/'))
-            size = loop['size'] * 1024L * 1024L
+            size = loop['size'] * 1024 * 1024
             imgname = loop['name']
             fsopts = loop['fsopts']
 
@@ -393,7 +393,7 @@ class LoopImageCreator(BaseImageCreator):
                 msger.verbose('Mounting image "%s" on "%s"' % (imgname, mp))
                 fs.makedirs(mp)
                 loop['loop'].mount()
-            except MountError, e:
+            except MountError as e:
                 raise
 
     def _unmount_instroot(self):

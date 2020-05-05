@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2010, 2011 Intel, Inc.
 #
@@ -16,7 +16,7 @@
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import os
-import urlparse
+import urllib
 
 _my_proxies = {}
 _my_noproxy = None
@@ -26,7 +26,7 @@ def set_proxy_environ():
     global _my_noproxy, _my_proxies
     if not _my_proxies:
         return
-    for key in _my_proxies.keys():
+    for key in list(_my_proxies.keys()):
         os.environ[key + "_proxy"] = _my_proxies[key]
     if not _my_noproxy:
         return
@@ -59,7 +59,7 @@ def _set_proxies(proxy = None, no_proxy = None):
 
     # Get proxy settings from environment if not provided
     if not proxy and not no_proxy:
-       proxies = os.environ.items()
+       proxies = list(os.environ.items())
 
        # Remove proxy env variables, urllib2 can't handle them correctly
        unset_proxy_environ()
@@ -135,7 +135,7 @@ def _set_noproxy_list():
             _my_noproxy_list.append({"match":2,"needle":ip,"netmask":netmask})
 
 def _isnoproxy(url):
-    (scheme, host, path, parm, query, frag) = urlparse.urlparse(url)
+    (scheme, host, path, parm, query, frag) = urllib.parse.urlparse(url)
 
     if '@' in host:
         user_pass, host = host.split('@', 1)
@@ -173,9 +173,9 @@ def get_proxy_for(url):
 
     type = url[0:url.index(":")]
     proxy = None
-    if _my_proxies.has_key(type):
+    if type in _my_proxies:
         proxy = _my_proxies[type]
-    elif _my_proxies.has_key("http"):
+    elif "http" in _my_proxies:
         proxy = _my_proxies["http"]
     else:
         proxy = None

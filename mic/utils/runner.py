@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2011 Intel, Inc.
 #
@@ -62,11 +62,16 @@ def runtool(cmdln_or_args, catch=1):
         serr = STDOUT
 
     try:
+        msger.debug("runner Popen({})".format(cmdln_or_args))
+    except Exception as e:
+        msger.error("runner debug: {}".format(e))
+
+    try:
         p = Popen(cmdln_or_args, stdout=sout, stderr=serr, shell=shell)
         (sout, serr) = p.communicate()
         # combine stdout and stderr, filter None out
-        out = ''.join(filter(None, [sout, serr]))
-    except OSError, e:
+        out = ''.join([_f.decode() for _f in [sout, serr] if _f])
+    except OSError as e:
         if e.errno == 2:
             # [Errno 2] No such file or directory
             msger.error('Cannot run command: %s, lost dependency?' % cmd)

@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2008, 2009, 2010, 2011 Intel, Inc.
 # Copyright (c) 2012 Jolla Ltd.
@@ -23,20 +23,17 @@ import struct
 import termios
 import tempfile
 import shutil
-import urlparse
+import urllib
 import rpm
 import hashlib
 from mic import msger
 from .errors import CreatorError
 from .proxy import get_proxy_for
-import runner
-from urlgrabber import grabber, __version__ as grabber_version
-if rpm.labelCompare(grabber_version.split('.'), '3.9.0'.split('.')) == -1:
-    msger.warning("Version of python-urlgrabber is %s, lower than '3.9.0', "
-                  "you may encounter some network issues" % grabber_version)
+from . import runner
+from urlgrabber import grabber
 
 def myurlgrab(url, filename, proxies, progress_obj = None, ignore_404 = False):
-    g = grabber.URLGrabber()
+    g = grabber.URLGrabber(netrc_optional=True)
     if progress_obj is None:
         progress_obj = TextProgress()
 
@@ -54,11 +51,11 @@ def myurlgrab(url, filename, proxies, progress_obj = None, ignore_404 = False):
                 ssl_verify_host = False, ssl_verify_peer = False,
                 proxies = proxies, http_headers = (('Pragma', 'no-cache'),),
                 quote = 0, progress_obj = progress_obj)
-        except grabber.URLGrabError, e:
+        except grabber.URLGrabError as e:
             if e.errno == 14 and e.code in [404, 503] and ignore_404:
                 return None
             else:
-                raise CreatorError("URLGrabber error: %s - e.errno: %s" % (url, e.errno))
+                raise CreatorError("URLGrabber error: %s - %s" % (url, e))
 
     return filename
 
@@ -126,12 +123,21 @@ class RPMInstallCallback:
         self.logString = []
         self.headmsg = "Installing"
 
+    def _bytes_to_str(self, s):
+        if isinstance(s, bytes):
+            return s.decode()
+        return s
+
     def _dopkgtup(self, hdr):
         tmpepoch = hdr['epoch']
         if tmpepoch is None: epoch = '0'
         else: epoch = str(tmpepoch)
 
-        return (hdr['name'], hdr['arch'], epoch, hdr['version'], hdr['release'])
+        return (self._bytes_to_str(hdr['name']),
+                self._bytes_to_str(hdr['arch']),
+                epoch,
+                self._bytes_to_str(hdr['version']),
+                self._bytes_to_str(hdr['release']))
 
     def _makeHandle(self, hdr):
         handle = '%s:%s.%s-%s-%s' % (hdr['epoch'], hdr['name'], hdr['version'],
@@ -219,7 +225,7 @@ class RPMInstallCallback:
 
         elif what == rpm.RPMCALLBACK_INST_PROGRESS:
             if h is not None:
-                percent = (self.total_installed*100L)/self.total_actions
+                percent = (self.total_installed*100)/self.total_actions
                 if total > 0:
                     try:
                         hdr, rpmloc = h
@@ -240,7 +246,7 @@ class RPMInstallCallback:
                         msger.info(msg)
 
                         if self.total_installed == self.total_actions:
-                            msger.raw('')
+                            msger.verbose("Installed packages:")
                             msger.verbose('\n'.join(self.logString))
 
         elif what == rpm.RPMCALLBACK_UNINST_START:
@@ -415,29 +421,29 @@ def isMultiLibArch(arch=None):
     if arch is None:
         arch = getCanonArch()
 
-    if not arches.has_key(arch): # or we could check if it is noarch
+    if arch not in arches: # or we could check if it is noarch
         return False
 
-    if multilibArches.has_key(arch):
+    if arch in multilibArches:
         return True
 
-    if multilibArches.has_key(arches[arch]):
+    if arches[arch] in multilibArches:
         return True
 
     return False
 
 def getBaseArch():
     myarch = getCanonArch()
-    if not arches.has_key(myarch):
+    if myarch not in arches:
         return myarch
 
     if isMultiLibArch(arch=myarch):
-        if multilibArches.has_key(myarch):
+        if myarch in multilibArches:
             return myarch
         else:
             return arches[myarch]
 
-    if arches.has_key(myarch):
+    if myarch in arches:
         basearch = myarch
         value = arches[basearch]
         while value != 'noarch':
@@ -477,7 +483,7 @@ def checkSig(ts, package):
     try:
         hdr = ts.hdrFromFdno(fdno)
 
-    except rpm.error, e:
+    except rpm.error as e:
         if str(e) == "public key not availaiable":
             value = 1
         if str(e) == "public key not available":
@@ -562,7 +568,7 @@ def checkRepositoryEULA(name, repo):
         proxy_password = repo.proxy_password
 
         if proxy_username:
-            proxy_netloc = urlparse.urlsplit(proxy).netloc
+            proxy_netloc = urllib.parse.urlsplit(proxy).netloc
             if proxy_password:
                 proxy = 'http://%s:%s@%s' % (proxy_username, proxy_password, proxy_netloc)
             else:
@@ -581,7 +587,7 @@ def checkRepositoryEULA(name, repo):
     for url in repo.baseurl:
 
         # try to download
-        repo_eula_url = urlparse.urljoin(url, "LICENSE.txt")
+        repo_eula_url = urllib.parse.urljoin(url, "LICENSE.txt")
 
         repo_eula_path = myurlgrab(repo_eula_url,
                                    os.path.join(repo_lic_dir, repo.id + '_LICENSE.txt'),
@@ -611,7 +617,7 @@ def checkRepositoryEULA(name, repo):
         return False
 
     # try to find support_info.html for extra infomation
-    repo_info_url = urlparse.urljoin(baseurl, "support_info.html")
+    repo_info_url = urllib.parse.urljoin(baseurl, "support_info.html")
     repo_info_path = myurlgrab(repo_eula_url,
                                os.path.join(repo_lic_dir, repo.id + '_LICENSE.txt'),
                                proxies, ignore_404 = True)

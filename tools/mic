@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2011 Intel, Inc.
 #
@@ -131,7 +131,7 @@ class MicCmd(cmdln.Cmdln):
 
         srcimager = None
         destimager = None
-        for iname, icls in pluginmgr.get_plugins('imager').iteritems():
+        for iname, icls in pluginmgr.get_plugins('imager').items():
            if iname == srcformat and hasattr(icls, "do_unpack"):
                srcimager = icls
            if iname == destformat and hasattr(icls, "do_pack"):
@@ -200,7 +200,7 @@ class MicCmd(cmdln.Cmdln):
             imagetype = "loop"
 
         chrootclass = None
-        for pname, pcls in pluginmgr.get_plugins('imager').iteritems():
+        for pname, pcls in pluginmgr.get_plugins('imager').items():
             if pname == imagetype and hasattr(pcls, "do_chroot"):
                 chrootclass = pcls
                 break
@@ -220,18 +220,18 @@ if __name__ == "__main__":
         msger.error('\n^C catched, program aborted.')
 
     # catch 'no space left' exception, etc
-    except IOError, e:
+    except IOError as e:
         if e.errno == errno.ENOSPC:
             msger.error('\nNo space left on device')
         raise
 
-    except errors.Usage, usage:
+    except errors.Usage as usage:
         msger.error(str(usage))
 
-    except errors.Abort, msg:
+    except errors.Abort as msg:
         msger.info(str(msg))
 
-    except errors.CreatorError, err:
+    except errors.CreatorError as err:
         if msger.get_loglevel() == 'debug':
             import traceback
             msger.error(traceback.format_exc())

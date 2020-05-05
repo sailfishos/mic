@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2011 Intel, Inc.
 #
@@ -24,7 +24,7 @@ from mic.utils import misc, fs_related, runner
 from mic.utils.errors import CreatorError, MountError
 from mic.utils.partitionedfs import PartitionedMount
 
-from livecd import LiveCDImageCreator
+from .livecd import LiveCDImageCreator
 class LiveUSBImageCreator(LiveCDImageCreator):
     def __init__(self, *args):
         LiveCDImageCreator.__init__(self, *args)
@@ -64,7 +64,7 @@ class LiveUSBImageCreator(LiveCDImageCreator):
                       homesizemb + \
                       swapsizemb + \
                       livesize + \
-                      plussize) * 1024L * 1024L
+                      plussize) * 1024 * 1024
 
         disk = fs_related.SparseLoopbackDisk("%s/%s.usbimg" \
                                                  % (self._outdir, self.name),

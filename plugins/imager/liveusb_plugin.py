@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2011 Intel, Inc.
 # Copyright (c) 2012 Jolla Ltd.
@@ -85,7 +85,7 @@ class LiveUSBPlugin(ImagerPlugin):
         os_image_dir = os.path.dirname(os_image)
 
         # unpack image to target dir
-        imgsize = misc.get_file_size(os_image) * 1024L * 1024L
+        imgsize = misc.get_file_size(os_image) * 1024 * 1024
         imgtype = misc.get_image_type(os_image)
         if imgtype == "btrfsimg":
             fstype = "btrfs"
@@ -128,21 +128,23 @@ class LiveUSBPlugin(ImagerPlugin):
         import subprocess
 
         def __mkinitrd(instance):
-            kernelver = instance._get_kernel_versions().values()[0][0]
+            kernelver = list(instance._get_kernel_versions().values())[0][0]
             args = [ "/usr/libexec/mkliveinitrd", "/boot/initrd-%s.img" % kernelver, "%s" % kernelver ]
             try:
                 subprocess.call(args, preexec_fn = instance._chroot)
 
-            except OSError, (err, msg):
+            except OSError as xxx_todo_changeme:
+               (err, msg) = xxx_todo_changeme.args
                raise errors.CreatorError("Failed to execute /usr/libexec/mkliveinitrd: %s" % msg)
 
         def __run_post_cleanups(instance):
-            kernelver = instance._get_kernel_versions().values()[0][0]
+            kernelver = list(instance._get_kernel_versions().values())[0][0]
             args = ["rm", "-f", "/boot/initrd-%s.img" % kernelver]
 
             try:
                 subprocess.call(args, preexec_fn = instance._chroot)
-            except OSError, (err, msg):
+            except OSError as xxx_todo_changeme1:
+               (err, msg) = xxx_todo_changeme1.args
                raise errors.CreatorError("Failed to run post cleanups: %s" % msg)
 
         convertoropts = configmgr.convert
@@ -171,7 +173,7 @@ class LiveUSBPlugin(ImagerPlugin):
     @classmethod
     def do_unpack(cls, srcimg):
         img = srcimg
-        imgsize = misc.get_file_size(img) * 1024L * 1024L
+        imgsize = misc.get_file_size(img) * 1024 * 1024
         imgmnt = misc.mkdtemp()
         disk = fs_related.SparseLoopbackDisk(img, imgsize)
         imgloop = PartitionedMount({'/dev/sdb':disk}, imgmnt, skipformat = True)

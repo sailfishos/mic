@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 # vim: ai ts=4 sts=4 et sw=4
 #
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
@@ -62,6 +62,8 @@ CATCHERR_BUFFILE_FD = -1
 CATCHERR_BUFFILE_PATH = None
 CATCHERR_SAVED_2 = -1
 
+LOG_PREVIOUS_NEWLINE = True
+
 def _general_print(head, color, msg = None, stream = None, level = 'normal'):
     global LOG_CONTENT
     if not stream:
@@ -70,10 +72,6 @@ def _general_print(head, color, msg = None, stream = None, level = 'normal'):
     if LOG_LEVELS[level] > LOG_LEVEL:
         # skip
         return
-
-    # encode raw 'unicode' str to utf8 encoded str
-    if msg and isinstance(msg, unicode):
-        msg = msg.encode('utf-8', 'ignore')
 
     errormsg = ''
     if CATCHERR_BUFFILE_FD > 0:
@@ -84,7 +82,12 @@ def _general_print(head, color, msg = None, stream = None, level = 'normal'):
 
     # append error msg to LOG
     if errormsg:
+        if isinstance(errormsg, bytes):
+            errormsg = errormsg.decode()
         LOG_CONTENT += errormsg
+
+    if msg and isinstance(msg, bytes):
+        msg = msg.decode()
 
     # append normal msg to LOG
     save_msg = msg.strip() if msg else None
@@ -92,7 +95,7 @@ def _general_print(head, color, msg = None, stream = None, level = 'normal'):
         global HOST_TIMEZONE
         timestr = time.strftime("[%m/%d %H:%M:%S] ",
                                 time.gmtime(time.time() - HOST_TIMEZONE))
-        LOG_CONTENT += timestr + save_msg + '\n'
+        LOG_CONTENT += str(timestr) + save_msg + "\n"
         head += timestr
 
     if errormsg:
@@ -126,12 +129,16 @@ def _color_print(head, color, msg, stream, level):
                 newline = True
 
     if msg is not None:
-        if isinstance(msg, unicode):
-            msg = msg.encode('utf8', 'ignore')
+        global LOG_PREVIOUS_NEWLINE
+
+        if newline and not LOG_PREVIOUS_NEWLINE:
+            stream.write('\n')
 
         stream.write('%s%s' % (head, msg))
         if newline:
             stream.write('\n')
+
+        LOG_PREVIOUS_NEWLINE = newline
 
     stream.flush()
 
@@ -143,7 +150,9 @@ def _color_perror(head, color, msg, level = 'normal'):
 
 def _split_msg(head, msg):
     if isinstance(msg, list):
-        msg = '\n'.join(map(str, msg))
+        msg = "\n".join(map(lambda s: s.decode() if isinstance(s, bytes) else s, msg))
+    elif isinstance(msg, bytes):
+        msg = msg.decode()
 
     if msg.startswith('\n'):
         # means print \n at first
@@ -163,7 +172,7 @@ def _split_msg(head, msg):
     return head, msg
 
 def get_loglevel():
-    return (k for k,v in LOG_LEVELS.items() if v==LOG_LEVEL).next()
+    return next((k for k,v in list(LOG_LEVELS.items()) if v==LOG_LEVEL))
 
 def set_loglevel(level):
     global LOG_LEVEL
@@ -213,7 +222,7 @@ def ask(msg, default=True):
             msg += '(y/N) '
         if INTERACTIVE:
             while True:
-                repl = raw_input(msg)
+                repl = input(msg)
                 if repl.lower() == 'y':
                     return True
                 elif repl.lower() == 'n':
@@ -243,7 +252,7 @@ def choice(msg, choices, default=0):
         msg += " [%s] " % '/'.join(choices)
         if INTERACTIVE:
             while True:
-                repl = raw_input(msg)
+                repl = input(msg)
                 if repl in choices:
                     return repl
                 elif not repl.strip():
@@ -262,7 +271,7 @@ def pause(msg=None):
         _general_print('\rQ', ASK_COLOR, '')
         if msg is None:
             msg = 'press <ENTER> to continue ...'
-        raw_input(msg)
+        input(msg)
 
 def set_logfile(fpath):
     global LOG_FILE_FP

@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2008, 2009, 2010 Intel, Inc.
 #
@@ -17,10 +17,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc., 59
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-from pykickstart.base import *
-from pykickstart.errors import *
-from pykickstart.options import *
-from pykickstart.commands.bootloader import *
+from pykickstart.commands.bootloader import F8_Bootloader
+from pykickstart.version import F8
 
 class Moblin_Bootloader(F8_Bootloader):
     def __init__(self, writePriority=10, appendLine="", driveorder=None,
@@ -40,6 +38,6 @@ class Moblin_Bootloader(F8_Bootloader):
 
     def _getParser(self):
         op = F8_Bootloader._getParser(self)
-        op.add_option("--menus", dest="menus")
+        op.add_argument("--menus", dest="menus", version=F8, help="")
         return op
 

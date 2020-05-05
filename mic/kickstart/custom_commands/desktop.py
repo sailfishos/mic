@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2008, 2009, 2010 Intel, Inc.
 #
@@ -20,6 +20,7 @@
 from pykickstart.base import *
 from pykickstart.errors import *
 from pykickstart.options import *
+from pykickstart.version import F8
 
 class Moblin_Desktop(KickstartCommand):
     def __init__(self, writePriority=0,
@@ -30,7 +31,6 @@ class Moblin_Desktop(KickstartCommand):
 
         KickstartCommand.__init__(self, writePriority)
 
-        self.__new_version = False
         self.op = self._getParser()
 
         self.defaultdesktop = defaultdesktop
@@ -56,40 +56,36 @@ class Moblin_Desktop(KickstartCommand):
         return retval
 
     def _getParser(self):
-        try:
-            op = KSOptionParser(lineno=self.lineno)
-        except TypeError:
-            # the latest version has not lineno argument
-            op = KSOptionParser()
-            self.__new_version = True
+        op = KSOptionParser(prog="desktop", version=F8, description="")
 
-        op.add_option("--defaultdesktop", dest="defaultdesktop",
-                                          action="store",
-                                          type="string",
-                                          nargs=1)
-        op.add_option("--autologinuser", dest="autologinuser",
-                                         action="store",
-                                         type="string",
-                                         nargs=1)
-        op.add_option("--defaultdm", dest="defaultdm",
+        op.add_argument("--defaultdesktop", dest="defaultdesktop",
+                                            action="store",
+                                            type=str,
+                                            version=F8,
+                                            help="")
+        op.add_argument("--autologinuser", dest="autologinuser",
+                                           action="store",
+                                           type=str,
+                                           version=F8,
+                                           help="")
+        op.add_argument("--defaultdm", dest="defaultdm",
+                                       action="store",
+                                       type=str,
+                                       version=F8,
+                                       help="")
+        op.add_argument("--session", dest="session",
                                      action="store",
-                                     type="string",
-                                     nargs=1)
-        op.add_option("--session", dest="session",
-                                   action="store",
-                                   type="string",
-                                   nargs=1)
+                                     type=str,
+                                     version=F8,
+                                     help="")
         return op
 
     def parse(self, args):
-        if self.__new_version:
-            (opts, extra) = self.op.parse_args(args=args, lineno=self.lineno)
-        else:
-            (opts, extra) = self.op.parse_args(args=args)
+        opts, extra = self.op.parse_known_args(args=args, lineno=self.lineno)
 
         if extra:
-            m = _("Unexpected arguments to %(command)s command: %(options)s") \
+            m = "Unexpected arguments to %(command)s command: %(options)s" \
                   % {"command": "desktop", "options": extra}
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=m)
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg=m))
 
-        self._setToSelf(self.op, opts)
+        self.set_to_self(opts)

@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2011 Intel, Inc.
 #
@@ -26,7 +26,7 @@ from mic.utils import fs_related, runner, misc
 from mic.utils.partitionedfs import PartitionedMount
 from mic.utils.errors import CreatorError, MountError
 
-from baseimager import BaseImageCreator
+from .baseimager import BaseImageCreator
 class RawImageCreator(BaseImageCreator):
     """Installs a system into a file containing a partitioned disk image.
 
@@ -153,12 +153,12 @@ class RawImageCreator(BaseImageCreator):
                  raise CreatorError("Failed to create disks, no --fstype "
                                     "specified in partition line of ks file")
 
-            size =   parts[i].size * 1024L * 1024L
+            size =   parts[i].size * 1024 * 1024
 
             # If we have alignment set for partition we need to enlarge the
             # drive, so that the alignment changes fits there as well
             if parts[i].align:
-                size += parts[i].align * 1024L
+                size += parts[i].align * 1024
 
             found = False
             for j in range(len(self._diskinfo)):
@@ -316,7 +316,7 @@ class RawImageCreator(BaseImageCreator):
 
     def _install_syslinux(self):
         i = 0
-        for name in self.__disks.keys():
+        for name in list(self.__disks.keys()):
             loopdev = self.__disks[name].device
             i =i+1
 
@@ -394,7 +394,7 @@ class RawImageCreator(BaseImageCreator):
             misc.packing(dst, self.__imgdir)
         else:
             msger.debug("moving disks to stage location")
-	    for imgfile in os.listdir(self.__imgdir):
+            for imgfile in os.listdir(self.__imgdir):
                 src = os.path.join(self.__imgdir, imgfile)
                 dst = os.path.join(self._outdir, imgfile)
                 msger.debug("moving %s to %s" % (src,dst))
@@ -425,7 +425,7 @@ class RawImageCreator(BaseImageCreator):
         xml += "      </os>\n"
 
         i = 0
-        for name in self.__disks.keys():
+        for name in list(self.__disks.keys()):
             xml += "      <drive disk='%s-%s.%s' target='hd%s'/>\n" \
                    % (self.name,name, self.__disk_format,chr(ord('a')+i))
             i = i + 1
@@ -442,7 +442,7 @@ class RawImageCreator(BaseImageCreator):
         xml += "  <storage>\n"
 
         if self.checksum is True:
-            for name in self.__disks.keys():
+            for name in list(self.__disks.keys()):
                 diskpath = "%s/%s-%s.%s" \
                            % (self._outdir,self.name,name, self.__disk_format)
                 disk_size = os.path.getsize(diskpath)
@@ -489,7 +489,7 @@ class RawImageCreator(BaseImageCreator):
 
                 xml += "    </disk>\n"
         else:
-            for name in self.__disks.keys():
+            for name in list(self.__disks.keys()):
                 xml += "    <disk file='%s-%s.%s' use='system' format='%s'/>\n"\
                        %(self.name,
                          name,

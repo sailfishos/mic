@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2008, 2009, 2010 Intel, Inc.
 #
@@ -17,10 +17,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc., 59
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-from pykickstart.base import *
-from pykickstart.errors import *
-from pykickstart.options import *
-from pykickstart.commands.repo import *
+from pykickstart.commands.repo import F8_RepoData, F8_Repo
+from pykickstart.version import F8
 
 class Moblin_RepoData(F8_RepoData):
     def __init__(self, baseurl="", mirrorlist="", name="", priority=None,
@@ -84,24 +82,24 @@ class Moblin_Repo(F8_Repo):
                 parser.values.ensure_value(option.dest, []).append(d)
 
         op = F8_Repo._getParser(self)
-        op.add_option("--save", action="store_true", dest="save",
-                      default=False)
-        op.add_option("--proxy", type="string", action="store", dest="proxy",
-                      default=None, nargs=1)
-        op.add_option("--proxyuser", type="string", action="store",
-                      dest="proxy_username", default=None, nargs=1)
-        op.add_option("--proxypasswd", type="string", action="store",
-                      dest="proxy_password", default=None, nargs=1)
-        op.add_option("--debuginfo", action="store_true", dest="debuginfo",
-                      default=False)
-        op.add_option("--source", action="store_true", dest="source",
-                      default=False)
-        op.add_option("--disable", action="store_true", dest="disable",
-                      default=False)
-        op.add_option("--gpgkey", type="string", action="store", dest="gpgkey",
-                      default=None, nargs=1)
-        op.add_option("--ssl_verify", type="string", action="store",
-                      dest="ssl_verify", default="yes")
-        op.add_option("--priority", type="int", action="store", dest="priority",
-                      default=None)
+        op.add_argument("--save", action="store_true", dest="save",
+                        default=False, version=F8, help="")
+        op.add_argument("--proxy", type=str, action="store", dest="proxy",
+                        default=None, version=F8, help="")
+        op.add_argument("--proxyuser", type=str, action="store",
+                        dest="proxy_username", default=None, version=F8, help="")
+        op.add_argument("--proxypasswd", type=str, action="store",
+                        dest="proxy_password", default=None, version=F8, help="")
+        op.add_argument("--debuginfo", action="store_true", dest="debuginfo",
+                        default=False, version=F8, help="")
+        op.add_argument("--source", action="store_true", dest="source",
+                        default=False, version=F8, help="")
+        op.add_argument("--disable", action="store_true", dest="disable",
+                        default=False, version=F8, help="")
+        op.add_argument("--gpgkey", type=str, action="store", dest="gpgkey",
+                        default=None, version=F8, help="")
+        op.add_argument("--ssl_verify", type=str, action="store",
+                        dest="ssl_verify", default="yes", version=F8, help="")
+        op.add_argument("--priority", type=int, action="store", dest="priority",
+                        default=None, version=F8, help="")
         return op

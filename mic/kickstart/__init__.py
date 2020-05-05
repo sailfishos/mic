@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2007 Red Hat, Inc.
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
@@ -34,11 +34,11 @@ import pykickstart.version as ksversion
 from pykickstart.handlers.control import commandMap
 from pykickstart.handlers.control import dataMap
 
-import custom_commands.desktop as desktop
-import custom_commands.moblinrepo as moblinrepo
-import custom_commands.micboot as micboot
-import custom_commands.partition as partition
-import custom_commands.btrfs as btrfs
+from .custom_commands import desktop
+from .custom_commands import moblinrepo
+from .custom_commands import micboot
+from .custom_commands import partition
+from .custom_commands import btrfs
 
 class PrePackages(ksparser.Packages):
 
@@ -159,7 +159,7 @@ def apply_wrapper(func):
     def wrapper(*kargs, **kwargs):
         try:
             func(*kargs, **kwargs)
-        except (OSError, IOError, errors.KsError), err:
+        except (OSError, IOError, errors.KsError) as err:
             cfgcls = kargs[0].__class__.__name__
             if msger.ask("Failed to apply %s, skip and continue?" % cfgcls):
                 msger.warning("%s" % err)
@@ -217,7 +217,7 @@ def read_kickstart(path):
 
     try:
         ks.readKickstart(path)
-    except (kserrors.KickstartParseError, kserrors.KickstartError), err:
+    except (kserrors.KickstartParseError, kserrors.KickstartError) as err:
         if msger.ask("Errors occured on kickstart file, skip and continue?"):
             msger.warning("%s" % err)
             pass
@@ -340,7 +340,8 @@ class TimezoneConfig(KickstartConfig):
                 subprocess.call([cpcmd, "-f",
                                  self.path(tz_source),
                                  self.path(tz_dest)])
-        except (IOError, OSError), (errno, msg):
+        except (IOError, OSError) as xxx_todo_changeme:
+            (errno, msg) = xxx_todo_changeme.args
             raise errors.KsError("Timezone setting error: %s" % msg)
 
 class AuthConfig(KickstartConfig):
@@ -632,8 +633,8 @@ class NetworkConfig(KickstartConfig):
     def write_ifcfg(self, network):
         p = self.path("/etc/sysconfig/network-scripts/ifcfg-" + network.device)
 
-        f = file(p, "w+")
-        os.chmod(p, 0644)
+        f = open(p, "w+")
+        os.chmod(p, 0o644)
 
         f.write("DEVICE=%s\n" % network.device)
         f.write("BOOTPROTO=%s\n" % network.bootProto)
@@ -673,15 +674,15 @@ class NetworkConfig(KickstartConfig):
             return
 
         p = self.path("/etc/sysconfig/network-scripts/keys-" + network.device)
-        f = file(p, "w+")
-        os.chmod(p, 0600)
+        f = open(p, "w+")
+        os.chmod(p, 0o600)
         f.write("KEY=%s\n" % network.wepkey)
         f.close()
 
     def write_sysconfig(self, useipv6, hostname, gateway):
         path = self.path("/etc/sysconfig/network")
-        f = file(path, "w+")
-        os.chmod(path, 0644)
+        f = open(path, "w+")
+        os.chmod(path, 0o644)
 
         f.write("NETWORKING=yes\n")
 
@@ -710,8 +711,8 @@ class NetworkConfig(KickstartConfig):
         localline += "localhost.localdomain localhost"
 
         path = self.path("/etc/hosts")
-        f = file(path, "w+")
-        os.chmod(path, 0644)
+        f = open(path, "w+")
+        os.chmod(path, 0o644)
         f.write("127.0.0.1\t\t%s\n" % localline)
         f.write("::1\t\tlocalhost6.localdomain6 localhost6\n")
         f.close()
@@ -721,8 +722,8 @@ class NetworkConfig(KickstartConfig):
             return
 
         path = self.path("/etc/resolv.conf")
-        f = file(path, "w+")
-        os.chmod(path, 0644)
+        f = open(path, "w+")
+        os.chmod(path, 0o644)
 
         for ns in (nameservers):
             if ns:
@@ -779,7 +780,7 @@ def get_image_size(ks, default = None):
         if p.mountpoint == "/" and p.size:
             __size = p.size
     if __size > 0:
-        return int(__size) * 1024L * 1024L
+        return int(__size) * 1024 * 1024
     else:
         return default
 
@@ -856,7 +857,7 @@ def get_repos(ks, repo_urls = {}):
             baseurl = repo_urls[repo.name]
             mirrorlist = None
 
-        if repos.has_key(repo.name):
+        if repo.name in repos:
             msger.warning("Overriding already specified repo %s" %(repo.name,))
 
         proxy = None
@@ -890,7 +891,7 @@ def get_repos(ks, repo_urls = {}):
                             proxy, proxy_username, proxy_password, debuginfo,
                             source, gpgkey, disable, ssl_verify, cost, priority)
 
-    return repos.values()
+    return list(repos.values())
 
 def convert_method_to_repo(ks):
     try:
@@ -935,14 +936,14 @@ def inst_langs(ks):
 def get_post_scripts(ks):
     scripts = []
     for s in ks.handler.scripts:
-        if s.type == ksparser.KS_SCRIPT_POST:
+        if s.type == ksconstants.KS_SCRIPT_POST:
             scripts.append(s)
     return scripts
 
 def get_pre_scripts(ks):
     scripts = []
     for s in ks.handler.scripts:
-        if s.type == ksparser.KS_SCRIPT_PRE:
+        if s.type == ksconstants.KS_SCRIPT_PRE:
             scripts.append(s)
     return scripts
 

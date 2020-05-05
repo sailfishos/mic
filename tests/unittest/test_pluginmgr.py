@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import sys
 import glob
-import StringIO
+import io
 from mic import plugin
 from mic import pluginbase
 from mic import msger
@@ -22,8 +22,8 @@ class PluginMgrTest(unittest.TestCase):
         self.plugin = plugin.PluginMgr()
         self.stdout = sys.stdout
         self.stderr = sys.stderr
-        sys.stdout = StringIO.StringIO()
-        sys.stderr = StringIO.StringIO()
+        sys.stdout = io.StringIO()
+        sys.stderr = io.StringIO()
 
     def tearDown(self):
         sys.stdout = self.stdout
@@ -44,7 +44,7 @@ class PluginMgrTest(unittest.TestCase):
         for pt in plugin.PLUGIN_TYPES:
             plugindir[os.path.join(TEST_PLUGINS_LOC, pt)] = True
         #self.assertEqual(self.plugin.plugin_dirs.keys(), plugindir.keys())
-        self.assertTrue(any([x in plugindir.keys() for x in self.plugin.plugin_dirs.keys()]))
+        self.assertTrue(any([x in list(plugindir.keys()) for x in list(self.plugin.plugin_dirs.keys())]))
 
     def testNoExistedPluginDir(self):
         noexistdir = "/xxxx/xxxx/xxxx/xxxx"
@@ -57,7 +57,7 @@ class PluginMgrTest(unittest.TestCase):
         expect = ['zypptest', 'yumtest']
         expect.sort()
         lst = []
-        for name, cls in self.plugin.get_plugins('backend').items():
+        for name, cls in list(self.plugin.get_plugins('backend').items()):
             lst.append(name)
         lst.sort()
         #self.assertEqual(lst, expect)
@@ -67,7 +67,7 @@ class PluginMgrTest(unittest.TestCase):
         expect = ['fstest', 'looptest']
         expect.sort()
         lst = []
-        for name, cls in self.plugin.get_plugins('imager').items():
+        for name, cls in list(self.plugin.get_plugins('imager').items()):
             lst.append(name)
         lst.sort()
         #self.assertEqual(lst, expect)

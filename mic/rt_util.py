@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
 #
@@ -63,7 +63,7 @@ def runmic_in_runtime(runmode, opts, ksfile, argv=None):
             msger.info("Back to native running")
             return
         else:
-            for reponame, repostr in repostrs.items():
+            for reponame, repostr in list(repostrs.items()):
                 repolist.append(convert_repostr(repostr))
         runmic_in_bootstrap(name, argv, opts, ksfile, repolist)
     else:
@@ -104,16 +104,16 @@ def select_bootstrap(repomd, cachedir, bootstrapdir):
         if compare_rpmversion(repo_rpmver, bs['rpm']):
             return (bs['name'], {})
 
-    for bsname, bsrepo in cfgmgr.bootstraps.items():
+    for bsname, bsrepo in list(cfgmgr.bootstraps.items()):
         repolist = []
-        for repo in bsrepo.keys():
+        for repo in list(bsrepo.keys()):
             repolist.append(bsrepo[repo])
 
         rpmver = None
         try:
             repomd = misc.get_metadata_from_repos(repolist, cachedir)
             rpmver = misc.get_rpmver_in_repo(repomd)
-        except errors.CreatorError, e:
+        except errors.CreatorError as e:
             msger.set_loglevel(lvl)
             raise
 
@@ -157,8 +157,7 @@ def runmic_in_bootstrap(name, argv, opts, ksfile, repolist):
     # make unique and remain the original order
     lst = sorted(set(lst), key=lst.index)
 
-    bindmounts = ';'.join(map(lambda p: os.path.abspath(os.path.expanduser(p)),
-                              lst))
+    bindmounts = ';'.join([os.path.abspath(os.path.expanduser(p)) for p in lst])
 
     msger.info("Start mic command in bootstrap")
     bootstrap_env.run(name, argv, cwd, bindmounts)

@@ -18,13 +18,13 @@
 # subject to the GNU General Public License and may only be used or replicated
 # with the express permission of Red Hat, Inc. 
 #
-from pykickstart.base import *
-from pykickstart.errors import *
-from pykickstart.options import *
+from pykickstart.base import BaseData, KickstartCommand
+from pykickstart.errors import formatErrorMsg, KickstartValueError
+from pykickstart.options import KSOptionParser
+from pykickstart.version import F8
 
-import gettext
+from argparse import Action
 import warnings
-_ = lambda x: gettext.ldgettext("pykickstart", x)
 
 class BTRFSData(BaseData):
     removedKeywords = BaseData.removedKeywords
@@ -94,7 +94,6 @@ class BTRFS(KickstartCommand):
 
     def __init__(self, writePriority=132, *args, **kwargs):
         KickstartCommand.__init__(self, writePriority, *args, **kwargs)
-        self.op = self._getParser()
 
         # A dict of all the RAID levels we support.  This means that if we
         # support more levels in the future, subclasses don't have to
@@ -104,6 +103,7 @@ class BTRFS(KickstartCommand):
                           "RAID10": "raid10", "10": "raid10",
                           "single": "single" }
 
+        self.op = self._getParser()
         self.btrfsList = kwargs.get("btrfsList", [])
 
     def __str__(self):
@@ -115,69 +115,74 @@ class BTRFS(KickstartCommand):
 
     def _getParser(self):
         # Have to be a little more complicated to set two values.
-        def btrfs_cb (option, opt_str, value, parser):
-            parser.values.format = False
-            parser.values.preexist = True
+        class ValueAction(Action):
+            def __call__(self, parser, namespace, values, option_string):
+                namespace.format = False
+                namespace.preexist = True
 
-        def level_cb (option, opt_str, value, parser):
-            if self.levelMap.has_key(value):
-                parser.values.ensure_value(option.dest, self.levelMap[value])
+        class LevelAction(Action):
+            def __init__(self, option_strings, dest, **kwargs):
+                self._levelMap = kwargs.pop('_levelMap', [])
+                super(LevelAction, self).__init__(option_strings, dest, **kwargs)
 
-        op = KSOptionParser()
-        op.add_option("--noformat", action="callback", callback=btrfs_cb,
-                      dest="format", default=True, nargs=0)
-        op.add_option("--useexisting", action="callback", callback=btrfs_cb,
-                      dest="preexist", default=False, nargs=0)
+            def __call__(self, parser, namespace, value, option_string):
+                setattr(namespace, self.dest, self._levelMap.get(value))
+
+        op = KSOptionParser(prog="btrfs", version=F8, description="")
+        op.add_argument("--noformat", action=ValueAction,
+                        dest="format", default=True, nargs=0, version=F8, help="")
+        op.add_argument("--useexisting", action=ValueAction,
+                        dest="preexist", default=False, nargs=0, version=F8, help="")
 
         # label, data, metadata
-        op.add_option("--label", dest="label", default="")
-        op.add_option("--data", dest="dataLevel", action="callback",
-                      callback=level_cb, type="string", nargs=1)
-        op.add_option("--metadata", dest="metaDataLevel", action="callback",
-                      callback=level_cb, type="string", nargs=1)
+        op.add_argument("--label", dest="label", default="", version=F8, help="")
+        op.add_argument("--data", dest="dataLevel", action=LevelAction,
+                        type=str, version=F8, help="", _levelMap=self.levelMap)
+        op.add_argument("--metadata", dest="metaDataLevel", action=LevelAction,
+                        type=str, version=F8, help="", _levelMap=self.levelMap)
 
-        op.add_option("--quota", dest="quota", action="store_true",
-                      default=False)
+        op.add_argument("--quota", dest="quota", action="store_true",
+                        default=False, version=F8, help="")
         #
         # subvolumes
         #
-        op.add_option("--subvol", dest="subvol", action="store_true",
-                      default=False)
+        op.add_argument("--subvol", dest="subvol", action="store_true",
+                        default=False, version=F8, help="")
 
         # parent must be a device spec (LABEL, UUID, &c)
-        op.add_option("--parent", dest="parent", default="")
-        op.add_option("--snapshot", dest="snapshot", action="store_true",
-                      default=False)
-        op.add_option("--name", dest="name", default="")
-        op.add_option("--base", dest="base", default="")
+        op.add_argument("--parent", dest="parent", default="", version=F8, help="")
+        op.add_argument("--snapshot", dest="snapshot", action="store_true",
+                        default=False, version=F8, help="")
+        op.add_argument("--name", dest="name", default="", version=F8, help="")
+        op.add_argument("--base", dest="base", default="", version=F8, help="")
 
         return op
 
     def parse(self, args):
-        (opts, extra) = self.op.parse_args(args=args, lineno=self.lineno)
+        (namespace, extra) = self.op.parse_known_args(args=args, lineno=self.lineno)
         data = self.handler.BTRFSData()
-        self._setToObj(self.op, opts, data)
+        self.set_to_obj(namespace, data)
         data.lineno = self.lineno
 
         if len(extra) == 0 and not data.snapshot:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs must be given a mountpoint"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs must be given a mountpoint"))
 
         if len(extra) == 1 and not data.subvol:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs must be given a list of partitions"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs must be given a list of partitions"))
         elif len(extra) == 1:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs subvol requires specification of parent volume"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs subvol requires specification of parent volume"))
 
         if data.subvol and not data.name:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs subvolume requires a name"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs subvolume requires a name"))
 
         if data.snapshot and not data.name:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs snapshot requires a name"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs snapshot requires a name"))
 
         if data.snapshot and data.subvol:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs subvolume cannot be snapshot at the same time"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs subvolume cannot be snapshot at the same time"))
 
         if data.snapshot and not data.base:
-            raise KickstartValueError, formatErrorMsg(self.lineno, msg=_("btrfs snapshot requires a base"))
+            raise KickstartValueError(formatErrorMsg(self.lineno, msg="btrfs snapshot requires a base"))
 
         if len(extra) > 0:
             data.mountpoint = extra[0]
@@ -185,7 +190,7 @@ class BTRFS(KickstartCommand):
 
         # Check for duplicates in the data list.
         if data in self.dataList():
-            warnings.warn(_("A btrfs volume with the mountpoint %s has already been defined.") % data.label)
+            warnings.warn("A btrfs volume with the mountpoint '{}' has already been defined.".format(data.label))
 
         return data
 

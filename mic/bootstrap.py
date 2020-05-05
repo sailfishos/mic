@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
 #
@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc., 59
 # Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-from __future__ import with_statement
+
 import os, sys
 import pickle
 import shutil
@@ -54,7 +54,7 @@ def query_package_metadat(root='/', tag='name', pattern=None):
     except:
         raise errors.BootstrapError("Load %s/.metadata error" % root)
     else:
-        for pkg in metadata.keys():
+        for pkg in list(metadata.keys()):
             m = misc.RPM_RE.match(pkg)
             if m:
                 (n, a, v, r) = m.groups()
@@ -91,7 +91,7 @@ class Bootstrap(object):
 
     def _setPkgmgr(self, name):
         backend_plugins = pluginmgr.get_plugins('backend')
-        for (key, cls) in backend_plugins.iteritems():
+        for (key, cls) in backend_plugins.items():
             if key == name:
                 self._pkgmgr = cls
         if not self._pkgmgr:
@@ -208,7 +208,7 @@ class Bootstrap(object):
             pkg_manager.selectPackage(pkg)
 
         try:
-            pkg_manager.runInstall(512 * 1024L * 1024L)
+            pkg_manager.runInstall(512 * 1024 * 1024)
         except:
             raise errors.BootstrapError("Create bootstrap fail")
         else:
@@ -247,7 +247,7 @@ class Bootstrap(object):
         try:
             subprocess.call("zypper -n --no-gpg-checks update",
                             preexec_fn=mychroot, shell=True)
-        except OSError, err:
+        except OSError as err:
             raise errors.BootstrapError("Bootstrap: %s update failed" %\
                                         chrootdir)
 

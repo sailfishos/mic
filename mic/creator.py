@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2011 Intel, Inc.
 # Copyright (c) 2012 Jolla Ltd.
@@ -22,8 +22,8 @@ from optparse import SUPPRESS_HELP
 
 from mic import msger
 from mic.utils import cmdln, errors, rpmmisc
-from conf import configmgr
-from plugin import pluginmgr
+from .conf import configmgr
+from .plugin import pluginmgr
 
 class Creator(cmdln.Cmdln):
     """${name}: create an image
@@ -43,7 +43,7 @@ class Creator(cmdln.Cmdln):
 
         # get cmds from pluginmgr
         # mix-in do_subcmd interface
-        for subcmd, klass in pluginmgr.get_plugins('imager').iteritems():
+        for subcmd, klass in pluginmgr.get_plugins('imager').items():
             if not hasattr(klass, 'do_create'):
                 msger.warning("Unsurpport subcmd: %s" % subcmd)
                 continue
@@ -198,7 +198,7 @@ class Creator(cmdln.Cmdln):
                 configmgr.create['record_pkgs'].append(infotype)
 
         if self.options.arch is not None:
-            supported_arch = sorted(rpmmisc.archPolicies.keys(), reverse=True)
+            supported_arch = sorted(list(rpmmisc.archPolicies.keys()), reverse=True)
             if self.options.arch in supported_arch:
                 configmgr.create['arch'] = self.options.arch
             else:
@@ -244,12 +244,12 @@ class Creator(cmdln.Cmdln):
                 argv = self.preoptparse(argv)
                 self.options, args = self.optparser.parse_args(argv)
 
-            except cmdln.CmdlnUserError, ex:
+            except cmdln.CmdlnUserError as ex:
                 msg = "%s: %s\nTry '%s help' for info.\n"\
                       % (self.name, ex, self.name)
                 msger.error(msg)
 
-            except cmdln.StopOptionProcessing, ex:
+            except cmdln.StopOptionProcessing as ex:
                 return 0
         else:
             # optparser=None means no process for opts

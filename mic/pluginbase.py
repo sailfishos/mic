@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python3
 #
 # Copyright (c) 2011 Intel, Inc.
 #
@@ -20,25 +20,28 @@ import shutil
 from mic import msger
 from mic.utils import errors
 
-class _Plugin(object):
-    class __metaclass__(type):
-        def __init__(cls, name, bases, attrs):
-            if not hasattr(cls, 'plugins'):
-                cls.plugins = {}
+class _MetaTable(type):
+    def __init__(cls, name, bases, attrs):
+        if not hasattr(cls, 'plugins'):
+            cls.plugins = {}
 
-            elif 'mic_plugin_type' in attrs:
-                    if attrs['mic_plugin_type'] not in cls.plugins:
-                        cls.plugins[attrs['mic_plugin_type']] = {}
+        elif 'mic_plugin_type' in attrs:
+                if attrs['mic_plugin_type'] not in cls.plugins:
+                    cls.plugins[attrs['mic_plugin_type']] = {}
 
-            elif hasattr(cls, 'mic_plugin_type') and 'name' in attrs:
-                    cls.plugins[cls.mic_plugin_type][attrs['name']] = cls
+        elif hasattr(cls, 'mic_plugin_type') and 'name' in attrs:
+                cls.plugins[cls.mic_plugin_type][attrs['name']] = cls
 
-        def show_plugins(cls):
-            for cls in cls.plugins[cls.mic_plugin_type]:
-                print cls
+    def show_plugins(cls):
+        for cls in cls.plugins[cls.mic_plugin_type]:
+            print(cls)
 
-        def get_plugins(cls):
-            return cls.plugins
+    def get_plugins(cls):
+        return cls.plugins
+
+
+class _Plugin(metaclass=_MetaTable):
+    pass
 
 class ImagerPlugin(_Plugin):
     mic_plugin_type = "imager"
