@@ -14,6 +14,7 @@ Requires:   python3-base >= 3.8
 Requires:   e2fsprogs
 Requires:   dosfstools >= 2.11-8
 Requires:   syslinux >= 3.82
+Requires:   syslinux-extlinux
 Requires:   kpartx
 Requires:   parted
 Requires:   device-mapper
