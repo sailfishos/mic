@@ -28,6 +28,7 @@ from mic.plugin import pluginmgr
 from mic.utils import proxy
 from mic.utils import misc
 from mic.utils import errors
+from mic.utils.format import bytes_to_string
 
 minibase_grps = [ "tizen-bootstrap" ]
 minibase_pkgs = [ ]
@@ -41,7 +42,7 @@ def query_package_rpmdb(root='/', tag='name', pattern=None):
     ts = rpm.TransactionSet(root)
     mi = ts.dbMatch(tag, pattern)
     for hdr in mi:
-        version = hdr['version']
+        version = bytes_to_string(hdr['version'])
     return (name, version)
 
 def query_package_metadat(root='/', tag='name', pattern=None):
