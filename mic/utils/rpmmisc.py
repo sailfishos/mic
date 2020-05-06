@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 #
 # Copyright (c) 2008, 2009, 2010, 2011 Intel, Inc.
-# Copyright (c) 2012 Jolla Ltd.
-# Contact: Islam Amer <islam.amer@jollamobile.com>
+# Copyright (c) 2012-2020 Jolla Ltd.
+# Copyright (c) 2020 Open Mobile Platform LLC.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -26,6 +26,7 @@ import shutil
 import urllib
 import rpm
 import hashlib
+from mic.utils.format import bytes_to_string
 from mic import msger
 from .errors import CreatorError
 from .proxy import get_proxy_for
@@ -123,21 +124,16 @@ class RPMInstallCallback:
         self.logString = []
         self.headmsg = "Installing"
 
-    def _bytes_to_str(self, s):
-        if isinstance(s, bytes):
-            return s.decode()
-        return s
-
     def _dopkgtup(self, hdr):
         tmpepoch = hdr['epoch']
         if tmpepoch is None: epoch = '0'
         else: epoch = str(tmpepoch)
 
-        return (self._bytes_to_str(hdr['name']),
-                self._bytes_to_str(hdr['arch']),
+        return (bytes_to_string(hdr['name']),
+                bytes_to_string(hdr['arch']),
                 epoch,
-                self._bytes_to_str(hdr['version']),
-                self._bytes_to_str(hdr['release']))
+                bytes_to_string(hdr['version']),
+                bytes_to_string(hdr['release']))
 
     def _makeHandle(self, hdr):
         handle = '%s:%s.%s-%s-%s' % (hdr['epoch'], hdr['name'], hdr['version'],

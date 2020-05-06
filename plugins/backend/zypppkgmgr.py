@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 #
 # Copyright (c) 2010, 2011 Intel, Inc.
-# Copyright (c) 2012 Jolla Ltd.
-# Contact: Islam Amer <islam.amer@jollamobile.com>
+# Copyright (c) 2012-2020 Jolla Ltd.
+# Copyright (c) 2020 Open Mobile Platform LLC.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -30,6 +30,7 @@ from mic.utils import misc, rpmmisc, runner, fs_related
 from mic.utils.proxy import get_proxy_for
 from mic.utils.errors import CreatorError, RepoError, RpmError
 from mic.imager.baseimager import BaseImageCreator
+from mic.utils.format import bytes_to_string
 
 from functools import cmp_to_key
 
@@ -567,7 +568,7 @@ class Zypp(BackendPlugin):
 
         mi = self.ts.dbMatch('name', pkgname)
         for header in mi:
-            return header['FILENAMES']
+            return bytes_to_string(header['FILENAMES'])
 
     def __initialize_repo_manager(self):
         if self.repo_manager:

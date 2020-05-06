@@ -2,6 +2,8 @@
 # vim: ai ts=4 sts=4 et sw=4
 #
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
+# Copyright (c) 2020 Jolla Ltd.
+# Copyright (c) 2020 Open Mobile Platform LLC.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -19,6 +21,8 @@
 import os,sys
 import re
 import time
+
+from mic.utils.format import bytes_to_string
 
 __ALL__ = ['set_mode',
            'get_loglevel',
@@ -82,12 +86,10 @@ def _general_print(head, color, msg = None, stream = None, level = 'normal'):
 
     # append error msg to LOG
     if errormsg:
-        if isinstance(errormsg, bytes):
-            errormsg = errormsg.decode()
+        errormsg = bytes_to_string(errormsg)
         LOG_CONTENT += errormsg
 
-    if msg and isinstance(msg, bytes):
-        msg = msg.decode()
+    msg = bytes_to_string(msg)
 
     # append normal msg to LOG
     save_msg = msg.strip() if msg else None

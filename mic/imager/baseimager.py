@@ -3,6 +3,8 @@
 #
 # Copyright (c) 2007 Red Hat  Inc.
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
+# Copyright (c) 2020 Jolla Ltd.
+# Copyright (c) 2020 Open Mobile Platform LLC.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -34,6 +36,7 @@ from mic import msger
 from mic.utils.errors import CreatorError, Abort
 from mic.utils import misc, rpmmisc, runner, fs_related as fs
 from mic.chroot import kill_processes
+from mic.utils.format import bytes_to_string
 
 class BaseImageCreator(object):
     """Installs a system to a chroot directory.
@@ -480,7 +483,7 @@ class BaseImageCreator(object):
         def get_version(header):
             version = None
             for f in header['filenames']:
-                if f.startswith('/boot/vmlinuz-'):
+                if f.startswith(b'/boot/vmlinuz-'):
                     version = f[14:]
             return version
 
@@ -501,7 +504,7 @@ class BaseImageCreator(object):
             elif not version in ret[name]:
                 ret[name].append(version)
 
-        return ret
+        return bytes_to_string(ret)
 
 
     #
