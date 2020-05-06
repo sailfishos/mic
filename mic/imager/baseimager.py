@@ -34,6 +34,7 @@ from mic import msger
 from mic.utils.errors import CreatorError, Abort
 from mic.utils import misc, rpmmisc, runner, fs_related as fs
 from mic.chroot import kill_processes
+from mic.utils.format import bytes_to_string
 
 class BaseImageCreator(object):
     """Installs a system to a chroot directory.
@@ -501,7 +502,7 @@ class BaseImageCreator(object):
             elif not version in ret[name]:
                 ret[name].append(version)
 
-        return ret
+        return bytes_to_string(ret)
 
 
     #
