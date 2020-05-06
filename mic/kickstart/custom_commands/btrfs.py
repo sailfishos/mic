@@ -3,6 +3,8 @@
 # David Lehman <dlehman@redhat.com>
 #
 # Copyright 2005, 2006, 2007, 2011 Red Hat, Inc.
+# Copyright (c) 2020 Jolla Ltd.
+# Copyright (c) 2020 Open Mobile Platform LLC.
 #
 # This copyrighted material is made available to anyone wishing to use, modify,
 # copy, or redistribute it subject to the terms and conditions of the GNU

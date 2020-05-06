@@ -3,6 +3,8 @@
 # Marko Saukko <marko.saukko@cybercom.com>
 #
 # Copyright (C) 2011 Nokia Corporation and/or its subsidiary(-ies).
+# Copyright (c) 2020 Jolla Ltd.
+# Copyright (c) 2020 Open Mobile Platform LLC.
 #
 # This copyrighted material is made available to anyone wishing to use, modify,
 # copy, or redistribute it subject to the terms and conditions of the GNU

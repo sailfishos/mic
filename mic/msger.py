@@ -2,6 +2,8 @@
 # vim: ai ts=4 sts=4 et sw=4
 #
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
+# Copyright (c) 2020 Jolla Ltd.
+# Copyright (c) 2020 Open Mobile Platform LLC.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #
 # Copyright (c) 2020 Jolla Ltd.
-# Copyright (c) 2020 Open Mobile Platform LLC
+# Copyright (c) 2020 Open Mobile Platform LLC.
 # Contact: Juho Hämäläinen <juho.hamalainen@jolla.com>
 #
 # This program is free software; you can redistribute it and/or modify it
