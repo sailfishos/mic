@@ -30,6 +30,7 @@ from mic.utils import misc, rpmmisc, runner, fs_related
 from mic.utils.proxy import get_proxy_for
 from mic.utils.errors import CreatorError, RepoError, RpmError
 from mic.imager.baseimager import BaseImageCreator
+from mic.utils.format import bytes_to_string
 
 from functools import cmp_to_key
 
@@ -567,7 +568,7 @@ class Zypp(BackendPlugin):
 
         mi = self.ts.dbMatch('name', pkgname)
         for header in mi:
-            return header['FILENAMES']
+            return bytes_to_string(header['FILENAMES'])
 
     def __initialize_repo_manager(self):
         if self.repo_manager:
