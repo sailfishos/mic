@@ -645,9 +645,9 @@ class Zypp(BackendPlugin):
             probs = self.Z.resolver().problems()
 
             for problem in probs:
-                msger.warning("repo problem: %s, %s" \
-                              % (problem.description().decode("utf-8"),
-                                 problem.details().decode("utf-8")))
+                description = bytes_to_string(problem.description())
+                details = bytes_to_string(problem.details())
+                msger.warning("repo problem: {}, {}".format(description, details))
 
             raise RepoError("found %d resolver problem, abort!" \
                             % len(probs))
