@@ -418,10 +418,12 @@ class BaseImageCreator(object):
         return s
 
     def _get_fstab_special(self):
-        s = "devpts     /dev/pts  devpts  gid=5,mode=620   0 0\n"
-        s += "tmpfs      /dev/shm  tmpfs   defaults         0 0\n"
+        s =  "devtmpfs   /dev      devtmpfs  nosuid               0 0\n"
+        s += "devpts     /dev/pts  devpts  gid=5,mode=620         0 0\n"
+        s += "tmpfs      /dev/shm  tmpfs   noexec,nosuid,nodev    0 0\n"
         s += "proc       /proc     proc    defaults         0 0\n"
         s += "sysfs      /sys      sysfs   defaults         0 0\n"
+        s += "tmpfs      /tmp      tmpfs   nosuid,nodev           0 0\n"
         return s
 
     def _get_post_scripts_env(self, in_chroot):

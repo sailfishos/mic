@@ -98,10 +98,13 @@ class RawImageCreator(BaseImageCreator):
                          'fstype': p['fstype'],
                          'fsopts': "defaults,noatime" if not subvol['fsopts'] else subvol['fsopts']}
 
+        s += "devtmpfs   /dev      devtmpfs  nosuid               0 0\n"
         s += "devpts     /dev/pts  devpts  gid=5,mode=620   0 0\n"
-        s += "tmpfs      /dev/shm  tmpfs   defaults         0 0\n"
+        s += "tmpfs      /dev/shm  tmpfs   noexec,nosuid,nodev    0 0\n"
         s += "proc       /proc     proc    defaults         0 0\n"
         s += "sysfs      /sys      sysfs   defaults         0 0\n"
+        s += "tmpfs      /tmp      tmpfs   nosuid,nodev           0 0\n"
+
         return s
 
     def _create_mkinitrd_config(self):
