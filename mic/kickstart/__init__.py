@@ -22,7 +22,6 @@ import os, sys, re
 import shutil
 import subprocess
 import time
-import string
 
 from mic import msger
 from mic.utils import errors, misc, runner, fs_related as fs
@@ -428,7 +427,7 @@ class UserConfig(KickstartConfig):
     def addUser(self, userconfig):
         args = [ "/usr/sbin/useradd" ]
         if userconfig.groups:
-            args += [ "--groups", string.join(userconfig.groups, ",") ]
+            args += [ "--groups", ",".join(userconfig.groups) ]
         if userconfig.name:
             args.append(userconfig.name)
             try:
