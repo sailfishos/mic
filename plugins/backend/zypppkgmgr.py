@@ -39,6 +39,11 @@ def cmpEVR(ed1, ed2):
     (e2, v2, r2) = list(map(str, [ed2.epoch(), ed2.version(), ed2.release()]))
     return rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
 
+def cmpPackage(x, y):
+    # Note: lower value means higher priority
+    result = y.repoInfo().priority() - x.repoInfo().priority()
+    return cmpEVR(x.edition(), y.edition()) if result == 0 else result
+
 class RepositoryStub:
     def __init__(self):
         self.name = None
@@ -131,7 +136,7 @@ class Zypp(BackendPlugin):
             query.addAttribute(zypp.SolvAttr.edition, flag+evr)
 
         for pi in sorted(query.queryResults(self.Z.pool()),
-                         key=cmp_to_key(lambda x,y: cmpEVR(self._castKind(x).edition(), self._castKind(y).edition())),
+                         key=cmp_to_key(lambda x,y: cmpPackage(self._castKind(x), self._castKind(y))),
                          reverse=True):
             return pi
         return None
@@ -217,7 +222,7 @@ class Zypp(BackendPlugin):
 
         for item in sorted(
                         q.queryResults(self.Z.pool()),
-                        key=cmp_to_key(lambda x,y: cmpEVR(self._castKind(x).edition(), self._castKind(y).edition())),
+                        key=cmp_to_key(lambda x,y: cmpPackage(self._castKind(x), self._castKind(y))),
                         reverse=True):
 
             xitem = self._castKind(item)
@@ -254,7 +259,7 @@ class Zypp(BackendPlugin):
 
             for item in sorted(
                             q.queryResults(self.Z.pool()),
-                            key=cmp_to_key(lambda x,y: cmpEVR(self._castKind(x).edition(), self._castKind(y).edition())),
+                            key=cmp_to_key(lambda x,y: cmpPackage(self._castKind(x), self._castKind(y))),
                             reverse=True):
 
                 xitem = self._castKind(item)
@@ -333,7 +338,7 @@ class Zypp(BackendPlugin):
         msger.debug("looking for %s" % grp)
         for item in sorted(
                         q.queryResults(self.Z.pool()),
-                        key=cmp_to_key(lambda x,y: cmpEVR(self._castKind(x).edition(), self._castKind(y).edition())),
+                        key=cmp_to_key(lambda x,y: cmpPackage(self._castKind(x), self._castKind(y))),
                         reverse=True):
             xitem = self._castKind(item)
             summary = "%s" % xitem.summary()
@@ -935,7 +940,7 @@ class Zypp(BackendPlugin):
 
         if items:
             items = sorted(items,
-                           key=cmp_to_key(lambda x,y: cmpEVR(self._castKind(x).edition(), self._castKind(y).edition())),
+                           key=cmp_to_key(lambda x,y: cmpPackage(self._castKind(x), self._castKind(y))),
                            reverse=True)
 
             item = self._castKind(items[0])
