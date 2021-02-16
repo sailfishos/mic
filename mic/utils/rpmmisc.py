@@ -174,14 +174,16 @@ class RPMInstallCallback:
 
     def callback(self, what, bytes, total, h, user):
         if what == rpm.RPMCALLBACK_TRANS_START:
-            if bytes == 6:
-                self.total_actions = total
+            pass
 
         elif what == rpm.RPMCALLBACK_TRANS_PROGRESS:
             pass
 
         elif what == rpm.RPMCALLBACK_TRANS_STOP:
-            pass
+            if bytes == 6:
+                self.total_actions = total
+                self.total_installed = 0
+                self.total_removed = 0
 
         elif what == rpm.RPMCALLBACK_INST_OPEN_FILE:
             self.lastmsg = None
