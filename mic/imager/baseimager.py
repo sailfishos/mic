@@ -485,7 +485,7 @@ class BaseImageCreator(object):
         def get_version(header):
             version = None
             for f in header['filenames']:
-                if f.startswith(b'/boot/vmlinuz-'):
+                if f.startswith('/boot/vmlinuz-'):
                     version = f[14:]
             return version
 
