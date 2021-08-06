@@ -623,6 +623,8 @@ class PartitionedMount(Mount):
                              p['device']])
                 continue
 
+            dkwargs = {}
+
             rmmountdir = False
             if p['mountpoint'] == "/":
                 rmmountdir = True
@@ -632,11 +634,14 @@ class PartitionedMount(Mount):
                 myDiskMount = ExtDiskMount
             elif p['fstype'] == "btrfs":
                 myDiskMount = BtrfsDiskMount
+                dkwargs['subvolumes'] = self.subvolumes
             else:
                 raise MountError("Fail to support file system " + p['fstype'])
 
             if p['fstype'] == "btrfs" and not p['fsopts']:
                 p['fsopts'] = "subvolid=0"
+
+            dkwargs['fsopts'] = p['fsopts']
 
             pdisk = myDiskMount(RawDisk(p['size'] * self.sector_size, p['device']),
                                  self.mountdir + p['mountpoint'],
@@ -645,7 +650,7 @@ class PartitionedMount(Mount):
                                  p['label'],
                                  rmmountdir,
                                  self.skipformat,
-                                 fsopts = p['fsopts'])
+                                 **dkwargs)
             pdisk.mount(pdisk.fsopts)
             if p['fstype'] == "btrfs" and p['mountpoint'] == "/":
                 if not self.skipformat:
