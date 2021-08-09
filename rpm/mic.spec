@@ -78,6 +78,7 @@ Requires:   yum >= 3.2.24
 %setup -q -n %{name}-%{version}
 
 %build
+echo %{version} > VERSION
 %{py3_build}
 
 %install
