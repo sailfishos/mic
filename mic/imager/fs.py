@@ -64,11 +64,11 @@ class FsImageCreator(BaseImageCreator):
         else:
             (tar, comp) = os.path.splitext(self.pack_to)
             try:
-                tarcreat = {'.tar': '-cf',
-                            '.gz': '-czf',
-                            '.bz2': '-cjf',
-                            '.tgz': '-czf',
-                            '.tbz': '-cjf'}[comp]
+                tarcreat = {'.tar': '-cvf',
+                            '.gz': '-cvzf',
+                            '.bz2': '-cvjf',
+                            '.tgz': '-cvzf',
+                            '.tbz': '-cvjf'}[comp]
             except KeyError:
                 raise CreatorError("Unsupported comression for this image type:"
                                    " '%s', try '.tar', '.tar.gz', etc" % comp)
@@ -79,6 +79,7 @@ class FsImageCreator(BaseImageCreator):
             tar = find_binary_path('tar')
             tar_cmdline = [tar, "--numeric-owner",
                                 "--preserve-permissions",
+                                "--warning=no-file-changed",
                                 "--one-file-system",
                                 "--directory",
                                 self._instroot]

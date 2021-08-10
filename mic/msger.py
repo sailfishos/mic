@@ -51,7 +51,7 @@ PREFIX_RE = re.compile('^<(.*?)>\s*(.*)', re.S)
 
 INTERACTIVE = True
 
-LOG_LEVEL = 1
+LOG_LEVEL = 2
 LOG_LEVELS = {
                 'quiet': 0,
                 'normal': 1,
