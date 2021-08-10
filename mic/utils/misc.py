@@ -65,14 +65,14 @@ def hide_loopdev_presentation():
         with open(_LOOP_RULE_PTH, 'w') as wf:
             wf.write('KERNEL=="loop*", ENV{UDISKS_PRESENTATION_HIDE}="1"')
 
-        runner.quiet('udevadm trigger')
+        runner.quiet('udevadm trigger --settle')
     except:
         pass
 
 def unhide_loopdev_presentation():
     try:
         os.unlink(_LOOP_RULE_PTH)
-        runner.quiet('udevadm trigger')
+        runner.quiet('udevadm trigger --settle')
     except:
         pass
 
