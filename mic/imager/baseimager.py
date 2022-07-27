@@ -1030,6 +1030,9 @@ class BaseImageCreator(object):
                                           dir = self._instroot + "/tmp")
 
             s.interp = "/bin/bash"
+            s.interp_args = []
+            if s.errorOnFail:
+                s.interp_args += ["-e"]
             s.script = s.script.replace("\r", "")
             os.write(fd, s.script.encode())
             os.close(fd)
@@ -1054,7 +1057,7 @@ class BaseImageCreator(object):
 
             try:
                 try:
-                    retcode = subprocess.call([s.interp, script],
+                    retcode = subprocess.call([s.interp] + s.interp_args + [script],
                                               preexec_fn = preexec,
                                               env = env,
                                               stdout = sys.stdout,
@@ -1091,6 +1094,9 @@ class BaseImageCreator(object):
                                           dir = self._instroot + "/tmp")
 
             s.interp = "/bin/bash"
+            s.interp_args = []
+            if s.errorOnFail:
+                s.interp_args += ["-e"]
             s.script = s.script.replace("\r", "")
             os.write(fd, s.script.encode())
             os.close(fd)
@@ -1105,7 +1111,7 @@ class BaseImageCreator(object):
 
             try:
                 try:
-                    retcode = subprocess.call([s.interp, script],
+                    retcode = subprocess.call([s.interp] + s.interp_args + [script],
                                               preexec_fn = preexec,
                                               env = env,
                                               stdout = sys.stdout,
@@ -1252,6 +1258,9 @@ class BaseImageCreator(object):
                                           dir = "/tmp")
 
             s.interp = "/bin/bash"
+            s.interp_args = []
+            if s.errorOnFail:
+                s.interp_args += ["-e"]
             s.script = s.script.replace("\r", "")
             os.write(fd, s.script.encode())
             os.close(fd)
@@ -1266,7 +1275,7 @@ class BaseImageCreator(object):
 
             try:
                 try:
-                    retcode = subprocess.call([s.interp, script],
+                    retcode = subprocess.call([s.interp] + s.interp_args + [script],
                                               preexec_fn = preexec,
                                               env = env,
                                               stdout = sys.stdout,
