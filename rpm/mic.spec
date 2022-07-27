@@ -2,10 +2,9 @@ Name:       mic
 Summary:    Image Creator for Linux Distributions
 Version:    1.0.2
 Release:    1
-Group:      System/Base
 License:    GPLv2
 BuildArch:  noarch
-URL:        http://www.tizen.org
+URL:        https://github.com/sailfishos/mic
 Source0:    %{name}-%{version}.tar.bz2
 Source1:    mic.conf
 Requires:   util-linux
@@ -35,7 +34,6 @@ Requires:   python3-pykickstart
 Requires:   kmod
 BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
-BuildRoot:  %{_tmppath}/%{name}-%{version}-build
 
 %description
 The tool mic is used to create and manipulate images for Linux distributions.
@@ -47,7 +45,6 @@ an image.
 
 %package livecd
 Summary:    %{name} - livecd imager plugin
-Group:      System/Base
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name} = %{version}
 Requires:   /usr/bin/genisoimage
@@ -58,7 +55,6 @@ Requires:   isomd5sum
 
 %package liveusb
 Summary:    %{name} - liveusb imager plugin
-Group:      System/Base
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name}-livecd = %{version}
 
@@ -67,7 +63,6 @@ Requires:   %{name}-livecd = %{version}
 
 %package yum
 Summary:    %{name} - yum backend plugin
-Group:      System/Base
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name} = %{version}
 Requires:   yum >= 3.2.24
@@ -83,7 +78,6 @@ echo %{version} > VERSION
 %{py3_build}
 
 %install
-rm -rf $RPM_BUILD_ROOT
 %{py3_install}
 
 # install our mic.conf
