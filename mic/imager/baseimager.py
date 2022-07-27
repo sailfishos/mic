@@ -1033,6 +1033,8 @@ class BaseImageCreator(object):
             s.interp_args = []
             if s.errorOnFail:
                 s.interp_args += ["-e"]
+            if msger.is_verbose():
+                s.interp_args += ["-x"]
             s.script = s.script.replace("\r", "")
             os.write(fd, s.script.encode())
             os.close(fd)
@@ -1097,6 +1099,8 @@ class BaseImageCreator(object):
             s.interp_args = []
             if s.errorOnFail:
                 s.interp_args += ["-e"]
+            if msger.is_verbose():
+                s.interp_args += ["-x"]
             s.script = s.script.replace("\r", "")
             os.write(fd, s.script.encode())
             os.close(fd)
@@ -1261,6 +1265,8 @@ class BaseImageCreator(object):
             s.interp_args = []
             if s.errorOnFail:
                 s.interp_args += ["-e"]
+            if msger.is_verbose():
+                s.interp_args += ["-x"]
             s.script = s.script.replace("\r", "")
             os.write(fd, s.script.encode())
             os.close(fd)

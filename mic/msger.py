@@ -31,7 +31,9 @@ __ALL__ = ['set_mode',
            'set_logfile',
            'raw',
            'debug',
+           'is_debug',
            'verbose',
+           'is_verbose',
            'info',
            'warning',
            'error',
@@ -203,6 +205,9 @@ def verbose(msg):
     head, msg = _split_msg('Verbose', msg)
     _general_print(head, INFO_COLOR, msg, level = 'verbose')
 
+def is_verbose():
+    return LOG_LEVEL >= LOG_LEVELS['verbose']
+
 def warning(msg):
     head, msg = _split_msg('Warning', msg)
     _color_perror(head, WARN_COLOR, msg)
@@ -210,6 +215,9 @@ def warning(msg):
 def debug(msg):
     head, msg = _split_msg('Debug', msg)
     _color_perror(head, ERR_COLOR, msg, level = 'debug')
+
+def is_debug():
+    return LOG_LEVEL >= LOG_LEVELS['debug']
 
 def error(msg):
     head, msg = _split_msg('Error', msg)
