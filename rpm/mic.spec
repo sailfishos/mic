@@ -32,6 +32,7 @@ Requires:   python3-zypp >= 0.7.5
 Requires:   rpm-python
 Requires:   psmisc
 Requires:   python3-pykickstart
+Requires:   kmod
 BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
 BuildRoot:  %{_tmppath}/%{name}-%{version}-build
