@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+# This file is part of mic
 #
 # Copyright (c) 2007, Red Hat, Inc.
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.

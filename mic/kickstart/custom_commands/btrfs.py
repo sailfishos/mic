@@ -1,3 +1,4 @@
+# This file is part of mic
 #
 # Chris Lumens <clumens@redhat.com>
 # David Lehman <dlehman@redhat.com>

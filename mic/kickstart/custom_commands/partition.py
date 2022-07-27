@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+# This file is part of mic
 #
 # Marko Saukko <marko.saukko@cybercom.com>
 #

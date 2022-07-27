@@ -1,5 +1,6 @@
-#!/usr/bin/python3
 # vim: ai ts=4 sts=4 et sw=4
+#
+# This file is part of mic
 #
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
 # Copyright (c) 2020 Jolla Ltd.
