@@ -44,7 +44,7 @@ an image.
 
 
 %package livecd
-Summary:    %{name} - livecd imager plugin
+Summary:    Image Creator for Linux Distributions - livecd imager plugin
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name} = %{version}
 Requires:   /usr/bin/genisoimage
@@ -54,7 +54,7 @@ Requires:   isomd5sum
 %{summary}.
 
 %package liveusb
-Summary:    %{name} - liveusb imager plugin
+Summary:    Image Creator for Linux Distributions - liveusb imager plugin
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name}-livecd = %{version}
 
@@ -62,7 +62,7 @@ Requires:   %{name}-livecd = %{version}
 %{summary}.
 
 %package yum
-Summary:    %{name} - yum backend plugin
+Summary:    Image Creator for Linux Distributions - yum backend plugin
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name} = %{version}
 Requires:   yum >= 3.2.24
