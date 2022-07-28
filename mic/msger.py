@@ -1,5 +1,6 @@
-#!/usr/bin/python3
 # vim: ai ts=4 sts=4 et sw=4
+#
+# This file is part of mic
 #
 # Copyright (c) 2009, 2010, 2011 Intel, Inc.
 # Copyright (c) 2020 Jolla Ltd.
@@ -15,8 +16,8 @@
 # for more details.
 #
 # You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc., 59
-# Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os,sys
 import re
