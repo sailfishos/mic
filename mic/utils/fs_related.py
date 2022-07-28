@@ -1139,7 +1139,7 @@ def get_loop_device(losetupcmd, lofile):
     global DEVICE_LOCKFILE
 
     import fcntl
-    makedirs(os.path.dirname(DEVICE_LOCKFILE))
+    makedirs(os.path.realpath(os.path.dirname(DEVICE_LOCKFILE)))
     fp = open(DEVICE_LOCKFILE, 'w')
     fcntl.flock(fp, fcntl.LOCK_EX)
     try:
