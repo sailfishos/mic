@@ -1,0 +1,6 @@
+#!/usr/bin/git-change-log --script
+
+# Use double star to consider also the older, prefixed tags
+git-change-log --tags 'refs/tags/**' --since rpm/mic.changes
+echo
+git-show :rpm/mic.changes
