@@ -416,6 +416,7 @@ class LoopImageCreator(BaseImageCreator):
             if item['fstype'] == "ext4":
                 runner.show('/sbin/tune2fs -O ^huge_file,extents,uninit_bg %s '
                             % imgfile)
+                runner.show('/sbin/e2fsck -f -y %s' % imgfile)
             if self.compress_image:
                 misc.compressing(imgfile, self.compress_image)
 
