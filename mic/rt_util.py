@@ -48,7 +48,7 @@ def runmic_in_runtime(runmode, opts, ksfile, argv=None):
         try:
             repostrs = configmgr.bootstraps[name]
         except:
-            repostrs = "name:%s,baseurl:%s," (name, BOOTSTRAP_URL)
+            repostrs = "name:%s,baseurl:%s," % (name, BOOTSTRAP_URL)
             proxy = get_proxy_for(BOOTSTRAP_URL)
             if proxy:
                 repostrs += "proxy:%s" % proxy
