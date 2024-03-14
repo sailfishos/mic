@@ -26,7 +26,7 @@ Requires:   python3-urlgrabber >= 4.1.0+git1
 Requires:   squashfs-tools >= 4.0
 Requires:   btrfs-progs
 Requires:   python3-distro
-Requires:   python-m2crypto
+Requires:   python-M2Crypto
 Requires:   python3-zypp >= 0.7.5
 Requires:   rpm-python
 Requires:   psmisc
