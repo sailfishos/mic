@@ -486,14 +486,14 @@ def get_metadata_from_repos(repos, cachedir):
         checksums = {}
         sumtypes = {}
 
-        for elm in root.getiterator("%sdata" % ns):
+        for elm in root.iter("%sdata" % ns):
             if elm.attrib["type"] == "patterns":
                 filepaths['patterns'] = elm.find("%slocation" % ns).attrib['href']
                 checksums['patterns'] = elm.find("%sopen-checksum" % ns).text
                 sumtypes['patterns'] = elm.find("%sopen-checksum" % ns).attrib['type']
                 break
 
-        for elm in root.getiterator("%sdata" % ns):
+        for elm in root.iter("%sdata" % ns):
             if elm.attrib["type"] in ("group_gz", "group"):
                 filepaths['comps'] = elm.find("%slocation" % ns).attrib['href']
                 if elm.find("%sopen-checksum" % ns):
@@ -505,7 +505,7 @@ def get_metadata_from_repos(repos, cachedir):
                 break
 
         primary_type = None
-        for elm in root.getiterator("%sdata" % ns):
+        for elm in root.iter("%sdata" % ns):
             if elm.attrib["type"] in ("primary_db", "primary"):
                 primary_type = elm.attrib["type"]
                 filepaths['primary'] = elm.find("%slocation" % ns).attrib['href']
@@ -561,9 +561,9 @@ def get_rpmver_in_repo(repometadata):
             ns = root.getroot().tag
             ns = ns[0:ns.rindex("}")+1]
 
-            for elm in root.getiterator("%spackage" % ns):
+            for elm in root.iter("%spackage" % ns):
                 if elm.find("%sname" % ns).text == 'rpm':
-                    for node in elm.getchildren():
+                    for node in list(elm):
                         if node.tag == "%sversion" % ns:
                             versionlist.append(node.attrib['ver'])
 
@@ -583,7 +583,7 @@ def get_arch(repometadata):
             root = xmlparse(repo["primary"])
             ns = root.getroot().tag
             ns = ns[0:ns.rindex("}")+1]
-            for elm in root.getiterator("%spackage" % ns):
+            for elm in root.iter("%spackage" % ns):
                 if elm.find("%sarch" % ns).text not in ("noarch", "src"):
                     arch = elm.find("%sarch" % ns).text
                     if arch not in archlist:
@@ -620,7 +620,7 @@ def get_package(pkg, repometadata, arch = None):
             root = xmlparse(repo["primary"])
             ns = root.getroot().tag
             ns = ns[0:ns.rindex("}")+1]
-            for elm in root.getiterator("%spackage" % ns):
+            for elm in root.iter("%spackage" % ns):
                 if elm.find("%sname" % ns).text == pkg:
                     if elm.find("%sarch" % ns).text != "src":
                         version = elm.find("%sversion" % ns)
@@ -666,7 +666,7 @@ def get_source_name(pkg, repometadata):
             root = xmlparse(repo["primary"])
             ns = root.getroot().tag
             ns = ns[0:ns.rindex("}")+1]
-            for elm in root.getiterator("%spackage" % ns):
+            for elm in root.iter("%spackage" % ns):
                 if elm.find("%sname" % ns).text == pkg_name:
                     if elm.find("%sarch" % ns).text != "src":
                         version = elm.find("%sversion" % ns)
@@ -675,7 +675,7 @@ def get_source_name(pkg, repometadata):
                             ver = tmpver
                             fmt = elm.find("%sformat" % ns)
                             if fmt:
-                                fns = fmt.getchildren()[0].tag
+                                fns = list(fmt)[0].tag
                                 fns = fns[0:fns.rindex("}")+1]
                                 pkgpath = fmt.find("%ssourcerpm" % fns).text
                                 target_repo = repo
@@ -730,7 +730,7 @@ def get_pkglist_in_comps(group, comps):
     except SyntaxError:
         raise SyntaxError("%s syntax error." % comps)
 
-    for elm in root.getiterator("group"):
+    for elm in root.iter("group"):
         id = elm.find("id")
         name = elm.find("name")
         if id.text == group or name.text == group:
@@ -741,7 +741,7 @@ def get_pkglist_in_comps(group, comps):
     if not found:
         return pkglist
 
-    for require in elm.getiterator("packagereq"):
+    for require in elm.iter("packagereq"):
         if require.tag.endswith("packagereq"):
             pkgname = require.text
         if pkgname not in pkglist:
