@@ -80,6 +80,7 @@ class FsImageCreator(BaseImageCreator):
             tar_cmdline = [tar, "--numeric-owner",
                                 "--preserve-permissions",
                                 "--one-file-system",
+                                "--xattrs",
                                 "--directory",
                                 self._instroot]
             for ignore_entry in ignores:
