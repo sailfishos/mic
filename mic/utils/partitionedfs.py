@@ -20,6 +20,7 @@
 
 import os
 import time
+import shlex
 
 from mic import msger
 from mic.utils import runner
@@ -63,7 +64,7 @@ class PartitionedMount(Mount):
         # Size of a sector used in calculations
         self.sector_size = SECTOR_SIZE
 
-    def add_partition(self, size, disk, mountpoint, fstype = None, label=None, fsopts = None, boot = False, align = None):
+    def add_partition(self, size, disk, mountpoint, fstype = None, label=None, fsopts = None, mkfsopts = None, boot = False, align = None):
         # Converting MB to sectors for parted
         size = size * 1024 * 1024 / self.sector_size
 
@@ -104,6 +105,7 @@ class PartitionedMount(Mount):
                                     'mountpoint': mountpoint, # Mount relative to chroot
                                     'fstype': fstype, # Filesystem type
                                     'fsopts': fsopts, # Filesystem mount options
+                                    'mkfsopts': mkfsopts, # Filesystem creation options
                                     'label': label, # Partition label
                                     'disk': disk, # physical disk name holding partition
                                     'device': None, # kpartx device node for partition
@@ -642,6 +644,7 @@ class PartitionedMount(Mount):
                 p['fsopts'] = "subvolid=0"
 
             dkwargs['fsopts'] = p['fsopts']
+            dkwargs['mkfsopts'] = shlex.split(p['mkfsopts'])
 
             pdisk = myDiskMount(RawDisk(p['size'] * self.sector_size, p['device']),
                                  self.mountdir + p['mountpoint'],

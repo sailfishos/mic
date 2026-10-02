@@ -209,6 +209,7 @@ class RawImageCreator(BaseImageCreator):
                                           p.fstype,
                                           p.label,
                                           fsopts = p.fsopts,
+                                          mkfsopts = p.mkfsopts,
                                           boot = p.active,
                                           align = p.align)
 

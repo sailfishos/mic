@@ -418,13 +418,14 @@ class DiskMount(Mount):
 
 class ExtDiskMount(DiskMount):
     """A DiskMount object that is able to format/resize ext[23] filesystems."""
-    def __init__(self, disk, mountdir, fstype, blocksize, fslabel, rmmountdir=True, skipformat = False, fsopts = None):
+    def __init__(self, disk, mountdir, fstype, blocksize, fslabel, rmmountdir=True, skipformat = False, fsopts = None, mkfsopts = None):
         DiskMount.__init__(self, disk, mountdir, fstype, rmmountdir)
         self.blocksize = blocksize
         self.fslabel = fslabel.replace("/", "")
         self.uuid  = None
         self.skipformat = skipformat
         self.fsopts = fsopts
+        self.mkfsopts = mkfsopts or []
         self.dumpe2fs = find_binary_path("dumpe2fs")
         self.tune2fs = find_binary_path("tune2fs")
 
@@ -445,6 +446,7 @@ class ExtDiskMount(DiskMount):
                           "-F", "-L", self.fslabel,
                           "-m", "1", "-b", str(self.blocksize),
                           "-O", "^64bit", # syslinux does not support 64bit filesystems
+                          ] + self.mkfsopts + [
                           self.disk.device]) # str(self.disk.size / self.blocksize)])
         if rc != 0:
             raise MountError("Error creating %s filesystem on disk %s" % (self.fstype, self.disk.device))
@@ -527,7 +529,7 @@ class ExtDiskMount(DiskMount):
 
 class VfatDiskMount(DiskMount):
     """A DiskMount object that is able to format vfat/msdos filesystems."""
-    def __init__(self, disk, mountdir, fstype, blocksize, fslabel, rmmountdir=True, skipformat = False, fsopts = None):
+    def __init__(self, disk, mountdir, fstype, blocksize, fslabel, rmmountdir=True, skipformat = False, fsopts = None, mkfsopts = None):
         DiskMount.__init__(self, disk, mountdir, fstype, rmmountdir)
         self.blocksize = blocksize
         self.fslabel = fslabel.replace("/", "")
@@ -535,6 +537,7 @@ class VfatDiskMount(DiskMount):
         self.blkidcmd = find_binary_path("blkid")
         self.skipformat = skipformat
         self.fsopts = fsopts
+        self.mkfsopts = mkfsopts or []
         self.fsckcmd = find_binary_path("fsck." + self.fstype)
 
     def __parse_field(self, output, field):
@@ -550,7 +553,7 @@ class VfatDiskMount(DiskMount):
             return
 
         msger.verbose("Formating %s filesystem on %s" % (self.fstype, self.disk.device))
-        rc = runner.show([self.mkfscmd, "-n", self.fslabel, self.disk.device])
+        rc = runner.show([self.mkfscmd, "-n", self.fslabel] + self.mkfsopts + [self.disk.device])
         if rc != 0:
             raise MountError("Error creating %s filesystem on disk %s" % (self.fstype,self.disk.device))
  
@@ -617,7 +620,7 @@ class VfatDiskMount(DiskMount):
 
 class BtrfsDiskMount(DiskMount):
     """A DiskMount object that is able to format/resize btrfs filesystems."""
-    def __init__(self, disk, mountdir, fstype, blocksize, fslabel, rmmountdir=True, skipformat = False, fsopts = None, subvolumes=None, snapshots=None):
+    def __init__(self, disk, mountdir, fstype, blocksize, fslabel, rmmountdir=True, skipformat = False, fsopts = None, subvolumes=None, snapshots=None, mkfsopts = None):
         self.__check_btrfs()
         DiskMount.__init__(self, disk, mountdir, fstype, rmmountdir)
         self.blocksize = blocksize
@@ -625,6 +628,7 @@ class BtrfsDiskMount(DiskMount):
         self.uuid  = None
         self.skipformat = skipformat
         self.fsopts = fsopts
+        self.mkfsopts = mkfsopts or []
         self.blkidcmd = find_binary_path("blkid")
         self.btrfscmd = find_binary_path("btrfs")
         self.btrfsckcmd = find_binary_path("btrfsck")
@@ -859,7 +863,7 @@ class BtrfsDiskMount(DiskMount):
         msger.verbose("Formating %s filesystem on %s" % (self.fstype, self.disk.device))
         # For now hardcode the 'no extref' option
         msger.verbose("Hardcode in /usr/lib/python2.7/site-packages/mic/utils/fs_related.py for the 'no extref' option (-O ^extref). See JB#39420")
-        rc = runner.show([self.mkfscmd, "-O", "^extref", "-L", self.fslabel, self.disk.device])
+        rc = runner.show([self.mkfscmd, "-O", "^extref", "-L", self.fslabel] + self.mkfsopts + [self.disk.device])
         if rc != 0:
             raise MountError("Error creating %s filesystem on disk %s" % (self.fstype,self.disk.device))
 
